@@ -13,6 +13,7 @@ js/incidents.js   incident templates + level/shift planning (100 shifts)
 js/render.js      Three.js 3D renderer, characters, effects, GTA-style minimap
 js/game.js        game state, interaction, puzzles, HUD, menus, input, main loop
 netlify.toml      Netlify settings (no build needed)
+assets/           client logos shown on the reception brand wall (replace files to change them)
 
 ## Run locally
 Any static server works, e.g.:

@@ -105,6 +105,16 @@ function plant(){const g=new THREE.Group();const pot=new THREE.Mesh(new THREE.Cy
 function tree(){const g=new THREE.Group();const t=new THREE.Mesh(new THREE.CylinderGeometry(.15,.2,1.4,8),std('#5a3d26'));t.position.y=.7;t.castShadow=true;g.add(t);
   [[0,1.9,1.1],[0,2.7,.8],[0,3.3,.5]].forEach(([x,y,r])=>{const c=new THREE.Mesh(new THREE.ConeGeometry(r,1.2,10),std('#2e6b34',.85));c.position.y=y;c.castShadow=true;g.add(c)});return g}
 
+/* ---------- reception brand wall (client logos in /assets) ---------- */
+const BRAND_LOGOS=[{src:'assets/logo-powergrid.jpg',x:4.8,w:2.67},{src:'assets/logo-powertel.jpg',x:11.4,w:3.16}];
+function addBrandWall(){const g=new THREE.Group(),h=1.5,y=1.2;
+  const back=box(12.6,2.4,.12,std('#262b35',.6,.2));back.position.set(8,1.2,14.07);g.add(back);
+  const strip=new THREE.Mesh(new THREE.BoxGeometry(12.6,.05,.05),basic('#fff3d6'));strip.position.set(8,2.38,14.16);g.add(strip);
+  const ld=new THREE.TextureLoader();
+  BRAND_LOGOS.forEach(L=>{const frame=box(L.w+.16,h+.16,.06,std('#c9ced6',.3,.7));frame.position.set(L.x,y,14.15);g.add(frame);
+    const mat=new THREE.MeshBasicMaterial({color:'#e6e6e6'});const pl=new THREE.Mesh(new THREE.PlaneGeometry(L.w,h),mat);pl.position.set(L.x,y,14.19);g.add(pl);
+    ld.load(L.src,t=>{t.anisotropy=8;mat.map=t;mat.needsUpdate=true},undefined,()=>{g.remove(frame);g.remove(pl)})});
+  R3.floors[0].add(g)}
 function init3d(){
   if(!window.THREE){$('#cvwrap').insertAdjacentHTML('beforeend','<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#f99">3D engine failed to load. Check your connection and reload.</div>');return}
   const hi=SAVE.gfx!=='low';
@@ -134,6 +144,7 @@ function init3d(){
     ENT.filter(e=>e.f===f).forEach(e=>grp.add(buildEntity(e)));
     DECOR.filter(d=>d.f===f).forEach(d=>{const p=plant();p.position.set(d.x+.5,0,d.y+.5);grp.add(p)});
     grp.visible=false;sc.add(grp);R3.floors.push(grp)}
+  addBrandWall();
   // nav arrow + beacon
   const cone=new THREE.Mesh(new THREE.ConeGeometry(.17,.45,14),basic('#f5a524'));cone.rotation.z=-Math.PI/2;R3.arrow=new THREE.Group();R3.arrow.add(cone);sc.add(R3.arrow);
   R3.beacon=new THREE.Mesh(new THREE.CylinderGeometry(.45,.45,8,24,1,true),new THREE.MeshBasicMaterial({color:'#f5a524',transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false}));sc.add(R3.beacon);
