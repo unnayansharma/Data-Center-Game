@@ -12,7 +12,7 @@ function iosCommon(c,s){
   if(c==='end'){s.mode='exec';return''}
   if(c==='exit'){s.mode=(s.mode==='exec'||s.mode==='conf')?'exec':'conf';return''}
   return undefined}
-const linP=(host,u='kabir')=>s=>`${u}@${host}:~$ `;
+const linP=(host,u='kevin')=>s=>`${u}@${host}:~$ `;
 const needSudo='Permission denied. (Tip: this needs admin rights — prefix the command with sudo)';
 
 let LABRUN=null;
@@ -94,7 +94,7 @@ lab('lx-disk',{t:'Disk full on an app server',dom:'Linux',host:'app-14',cx:'linu
   [/^systemctl status app$/,s=>'● app.service - Orders App\n   Active: '+(LABRUN.R.st.rs?'active (running)':'active (running) — errors: ENOSPC No space left on device')]]});
 
 lab('lx-service',{t:'Website down: nginx will not start',dom:'Linux',host:'web-07',cx:'linux',prompt:linP('web-07'),
- intro:'[ALERT] https://shop.dc1.example is DOWN. nginx.service is in "failed" state.',
+ intro:'[ALERT] https://shop.example is DOWN. nginx.service is in "failed" state.',
  brief:'The web server failed to start. Find out why, fix it, and make sure it starts automatically after a reboot.',
  obj:[['status','Check why nginx failed','Run: systemctl status nginx'],['port','Find which process is using port 80','Run: sudo ss -tlnp'],['kill','Stop the stray process','Run: sudo kill <PID of python3>'],['start','Start nginx','Run: sudo systemctl start nginx'],['enable','Make nginx start on boot','Run: sudo systemctl enable nginx']],
  cheat:['systemctl status nginx — service state + last log lines','journalctl -u nginx -n 20 — service logs','sudo ss -tlnp — listening ports with process names','ps aux — all processes','sudo kill <pid> — stop a process','sudo systemctl start nginx — start the service','sudo systemctl enable nginx — start on boot','curl -I http://localhost — test the site'],
@@ -149,7 +149,7 @@ lab('lx-ufw',{t:'Configure a host firewall (ufw)',dom:'Linux',host:'web-11',cx:'
   [/^ufw delete allow (22|ssh|22\/tcp|openssh)$/,(m,s,a)=>{if(!a.sudo)return'ERROR: You need to be root';s.any22=false;s.rules=s.rules.filter(r=>!r.includes('Anywhere   <--'));return'Rule deleted'}],
   [/^ufw allow (443|443\/tcp|https)$/,(m,s,a)=>{if(!a.sudo)return'ERROR: You need to be root';s.rules.push('443/tcp       ALLOW    Anywhere');a.ok('https');return'Rule added'}],
   [/^ufw allow (80|80\/tcp|http)$/,(m,s,a)=>{if(!a.sudo)return'ERROR: You need to be root';s.rules.push('80/tcp        ALLOW    Anywhere');return'Rule added (fine for redirects, but not required here)'}],
-  [/^ufw enable$/,(m,s,a)=>{if(!a.sudo)return'ERROR: You need to be root';if(!LABRUN.R.done.ssh){if(s.def==='deny'){a.pen('You enabled default-deny BEFORE allowing SSH — you locked yourself out!');return'Firewall is active and enabled on system startup\n...connection to web-11 lost.\n[ Kabir restored access from the KVM console and disabled ufw. Add the SSH rule first. ]'}}if(s.any22)return'Fix the rule that allows SSH from Anywhere first (sudo ufw delete allow 22).';s.on=true;a.ok('enable');return'Firewall is active and enabled on system startup'}],
+  [/^ufw enable$/,(m,s,a)=>{if(!a.sudo)return'ERROR: You need to be root';if(!LABRUN.R.done.ssh){if(s.def==='deny'){a.pen('You enabled default-deny BEFORE allowing SSH — you locked yourself out!');return'Firewall is active and enabled on system startup\n...connection to web-11 lost.\n[ Kevin restored access from the KVM console and disabled ufw. Add the SSH rule first. ]'}}if(s.any22)return'Fix the rule that allows SSH from Anywhere first (sudo ufw delete allow 22).';s.on=true;a.ok('enable');return'Firewall is active and enabled on system startup'}],
   [/^ufw disable$/,(m,s,a)=>{if(!a.sudo)return'ERROR: You need to be root';s.on=false;return'Firewall stopped and disabled on system startup'}]]});
 
 function modeApply(cur,spec){if(/^[0-7]{3,4}$/.test(spec))return spec.slice(-3);const m=spec.match(/^([ugoa]*)([+\-=])([rwx]*)$/);if(!m)return null;const who=m[1]||'a',bits=(m[3].includes('r')?4:0)+(m[3].includes('w')?2:0)+(m[3].includes('x')?1:0);const d=cur.split('').map(Number);
@@ -166,7 +166,7 @@ lab('lx-perms',{t:'Fix dangerous file permissions',dom:'Linux',host:'app-03',cx:
   [/^ls( -\w+)?( \/etc\/app\/?)?$/,(m,s,a)=>{if(!m[1]||!m[1].includes('l'))return Object.keys(s.f).join('  ');a.ok('look');return Object.entries(s.f).map(([n,v])=>`${permStr(v.m)} 1 ${v.o.replace(':',' ')}  ${n}`).join('\n')}],
   [/^stat (\S+)$/,(m,s)=>{const k=Object.keys(s.f).find(n=>m[1].endsWith(n));return k?`File: ${m[1]}\nAccess: (0${s.f[k].m}/${permStr(s.f[k].m)})  Owner: ${s.f[k].o}`:'stat: No such file'}],
   [/^cat \/etc\/app\/\.env$/,(m,s,a)=>{const v=s.f['.env'];if(!a.sudo&&v.m[2]==='0')return'cat: /etc/app/.env: Permission denied  (good — that is the point!)';return'DB_HOST=10.10.5.20\nDB_USER=orders\nDB_PASSWORD=************  (exposed to every user!)'}],
-  [/^chmod (\S+) (\S+)$/,(m,s,a)=>{const k=Object.keys(s.f).find(n=>m[2].endsWith('/'+n)||m[2]===n);if(!k)return'chmod: cannot access: No such file or directory';if(!a.sudo&&s.f[k].o.split(':')[0]!=='kabir')return'chmod: changing permissions: Operation not permitted (use sudo)';const nm=modeApply(s.f[k].m,m[1]);if(!nm)return'chmod: invalid mode';s.f[k].m=nm;
+  [/^chmod (\S+) (\S+)$/,(m,s,a)=>{const k=Object.keys(s.f).find(n=>m[2].endsWith('/'+n)||m[2]===n);if(!k)return'chmod: cannot access: No such file or directory';if(!a.sudo&&s.f[k].o.split(':')[0]!=='kevin')return'chmod: changing permissions: Operation not permitted (use sudo)';const nm=modeApply(s.f[k].m,m[1]);if(!nm)return'chmod: invalid mode';s.f[k].m=nm;
     if(k==='.env'){const d=nm.split('').map(Number);if(d[2]===0&&!(d[1]&2)&&(d[0]&4))a.ok('env');else if(d[2])return'Others can still access it. Use 600.'}
     if(k==='config.yml'){if(!(+nm[2]&2))a.ok('cfg')}
     if(nm==='777'&&k!=='.env')a.pen('777 makes a file writable by everyone!');return''}],
@@ -180,10 +180,10 @@ lab('lx-users',{t:'Unknown admin account',dom:'Linux',host:'app-22',cx:'ir',prom
  cheat:['getent group sudo — members of the sudo group','grep tempadmin /etc/passwd — account details','last tempadmin — login history','who — who is logged in now','sudo usermod -L <user> — lock an account','sudo gpasswd -d <user> sudo — remove from sudo group','sudo pkill -KILL -u <user> — end the user\'s processes/sessions','sudo userdel <user> — delete an account'],
  learn:'Contain first, but preserve evidence: lock the account instead of deleting it so investigators can review its files and history. Then remove privileges, end sessions, and find how it was created.',
  cmds:[
-  [/^(getent group sudo|grep sudo \/etc\/group)$/,(m,s,a)=>{a.ok('find');return'sudo:x:27:admin,kabir,tempadmin'}],
+  [/^(getent group sudo|grep sudo \/etc\/group)$/,(m,s,a)=>{a.ok('find');return'sudo:x:27:admin,kevin,tempadmin'}],
   [/^(grep tempadmin \/etc\/passwd|id tempadmin|getent passwd tempadmin)$/,()=>'tempadmin:x:1007:1007::/home/tempadmin:/bin/bash   (created today 03:10)'],
-  [/^(last|lastlog)( -u)? ?(tempadmin)?$/,(m,s,a)=>{a.ok('evidence');return'tempadmin pts/2  203.0.113.77   Thu 03:12   still logged in\nkabir     pts/0  10.10.99.15    Wed 18:02 - 19:40\nadmin     pts/1  10.10.99.11    Wed 11:20 - 11:58'}],
-  [/^(who|w)$/,(m,s)=>s.killed?'kabir    pts/0  10.10.99.15':'kabir    pts/0  10.10.99.15\ntempadmin pts/2 203.0.113.77   <-- external IP!'],
+  [/^(last|lastlog)( -u)? ?(tempadmin)?$/,(m,s,a)=>{a.ok('evidence');return'tempadmin pts/2  203.0.113.77   Thu 03:12   still logged in\nkevin     pts/0  10.10.99.15    Wed 18:02 - 19:40\nadmin     pts/1  10.10.99.11    Wed 11:20 - 11:58'}],
+  [/^(who|w)$/,(m,s)=>s.killed?'kevin    pts/0  10.10.99.15':'kevin    pts/0  10.10.99.15\ntempadmin pts/2 203.0.113.77   <-- external IP!'],
   [/^(?:usermod -L|passwd -l) (\S+)$/,(m,s,a)=>{if(!a.sudo)return needSudo;if(m[1]==='tempadmin'){a.ok('lock');return'passwd: password expiry information changed. (account locked)'}a.pen(`You locked out ${m[1]}, a legitimate admin!`);return''}],
   [/^(?:gpasswd -d (\S+) sudo|deluser (\S+) sudo)$/,(m,s,a)=>{if(!a.sudo)return needSudo;const u=m[1]||m[2];if(u==='tempadmin'){a.ok('sudo');return'Removing user tempadmin from group sudo'}a.pen(`You removed ${u}'s legitimate admin rights!`);return''}],
   [/^userdel( -r)? tempadmin$/,(m,s,a)=>a.sudo?'Hold on — deleting it destroys evidence. Lock it instead so the security team can investigate.':needSudo],
@@ -213,7 +213,7 @@ lab('lx-brute',{t:'SSH brute-force attack',dom:'Linux',host:'bastion-01',cx:'har
  init:g=>{const bad=['203.0.113.'+(10+g.int(200)),'198.51.100.'+(10+g.int(200))];return{bad,ban:new Set()}},
  cmds:[
   [/^(tail|cat|less|grep)\b.*\/var\/log\/auth\.log.*$/,(m,s,a)=>{if(!a.sudo)return'grep: /var/log/auth.log: '+needSudo;const c=m[0];
-    if(/accepted/i.test(c)){a.ok('check');return'Nov 13 02:10:04 sshd[2211]: Accepted publickey for deploy from 10.0.4.12 port 51822\nNov 13 08:15:40 sshd[3310]: Accepted publickey for kabir from 10.10.99.15 port 50110\n(only known users and IPs — no attacker got in ✓)'}
+    if(/accepted/i.test(c)){a.ok('check');return'Nov 13 02:10:04 sshd[2211]: Accepted publickey for deploy from 10.0.4.12 port 51822\nNov 13 08:15:40 sshd[3310]: Accepted publickey for kevin from 10.10.99.15 port 50110\n(only known users and IPs — no attacker got in ✓)'}
     a.ok('read');const L=[];for(let i=0;i<10;i++){const b=s.bad[i%2];L.push(s.ban.has(b)?`Nov 13 09:4${i} kernel: [UFW BLOCK] SRC=${b} DPT=22`:`Nov 13 09:4${i} sshd[${4000+i}]: Failed password for ${['root','admin','oracle','test'][i%4]} from ${b} port ${40000+i*31} ssh2`)}if(!/failed/i.test(c))L.splice(4,0,'Nov 13 09:44 sshd[3999]: Accepted publickey for deploy from 10.0.4.12 port 51900');return L.join('\n')+(/\| ?wc -l/.test(c)?'\n(4,812 lines)':'')}],
   [/^fail2ban-client status( sshd)?$/,(m,s,a)=>a.sudo?`Status for the jail: sshd\n|- Currently banned: ${s.ban.size}\n\`- Banned IP list: ${[...s.ban].join(' ')}`:needSudo],
   [/^(?:fail2ban-client set sshd banip|ufw deny from|iptables -A INPUT -s) (\d+\.\d+\.\d+\.\d+)(?: -j DROP)?$/,(m,s,a)=>{if(!a.sudo)return needSudo;const ip=m[1];if(ip==='10.0.4.12'){a.pen('You banned the deploy server — all releases are now broken!');return'1'}if(ip.startsWith('10.10.99.')){a.pen('You banned the admin management network!');return'1'}if(s.bad.includes(ip)){s.ban.add(ip);if(s.bad.every(b=>s.ban.has(b)))a.ok('ban');return'1  (banned)'+(s.ban.size<s.bad.length?'\nStill seeing attacks from another IP…':'')}return'1  (banned — but no attack traffic came from that IP)'}]]});
@@ -246,7 +246,7 @@ lab('lx-mem',{t:'Application out of memory',dom:'Linux',host:'app-31',cx:'linux'
  cmds:[
   [/^free( -[mhg])?$/,(m,s,a)=>{if(s.rs)a.ok('verify');else a.ok('mem');return s.rs?'               total   used   free\nMem:           32000   9100  22900\nSwap:           4096      0   4096':'               total   used   free\nMem:           32000  31700    300\nSwap:           4096   4096      0'}],
   [/^(top|htop|ps\b.*)$/,(m,s,a)=>{a.ok('find');return s.rs?'PID   %MEM COMMAND\n5512  24.0 java -jar orders-api.jar':'PID   %MEM COMMAND\n4410  94.6 java -jar orders-api.jar   <- growing every minute\n812    0.1 sshd'}],
-  [/^(journalctl -u orders-api.*|dmesg.*)$/,(m,s,a)=>{a.ok('logs');return'java.lang.OutOfMemoryError: Java heap space\n  at com.dc1.orders.CacheManager.put(CacheManager.java:88)\nkernel: Out of memory: Killed process 2231 (node_exporter)'}],
+  [/^(journalctl -u orders-api.*|dmesg.*)$/,(m,s,a)=>{a.ok('logs');return'java.lang.OutOfMemoryError: Java heap space\n  at com.example.orders.CacheManager.put(CacheManager.java:88)\nkernel: Out of memory: Killed process 2231 (node_exporter)'}],
   [/^systemctl restart orders-api$/,(m,s,a)=>{if(!a.sudo)return'Access denied (use sudo)';s.rs=true;a.ok('restart');return''}],
   [/^kill/,()=>'Prefer a clean service restart: sudo systemctl restart orders-api']]});
 
@@ -320,7 +320,7 @@ function aclChk(s,a){const l=s.acls[s.cur];if(aclEval(l,'10.50.0.23','10.10.5.20
   const pi=l.findIndex(r=>r.a==='permit'&&r.s.w==='255.255.255.255'&&r.d.w==='255.255.255.255'),di=l.findIndex(r=>r.a==='deny');if(pi>=0&&di>pi)labPrint('⚠ Your "permit ip any any" is ABOVE the deny — the deny will never be reached. Remove it with "no <seq>" and re-add it at the end.','hint')}
 
 lab('nw-route',{t:'No internet: missing default route',dom:'Network',host:'edge-rtr-02',ios:1,lower:1,cx:'routing',
- intro:'[ALERT] After a router replacement last night, nothing in DC-1 can reach the internet.',
+ intro:'[ALERT] After a router replacement last night, nothing in the data centre can reach the internet.',
  brief:'The new edge router has no default route. Find the ISP gateway from the interface addressing (/30 link), add a default route, test, and save.',
  obj:[['look','Check the routing table','Run: show ip route'],['route','Add a default route to the ISP gateway','ip route 0.0.0.0 0.0.0.0 203.0.113.1'],['verify','Test internet reachability','Run: ping 8.8.8.8'],['save','Save the configuration','write memory']],
  cheat:['show ip interface brief — interfaces and IPs','show ip route — routing table','configure terminal — config mode','ip route 0.0.0.0 0.0.0.0 <next-hop> — default route','no ip route 0.0.0.0 0.0.0.0 <next-hop> — remove it','ping 8.8.8.8 — test','write memory — save'],
@@ -362,7 +362,7 @@ lab('nw-bgp',{t:'BGP session to ISP-B is down',dom:'Network',host:'edge-rtr-01',
   [/^sh(ow)? log(ging)?$/,(m,s,a)=>{a.ok('cause');return'%BGP-5-ADJCHANGE: neighbor 198.51.100.1 Down - Admin. shutdown (by user: maint-script)'}],
   [/^clear ip bgp/,()=>'% Neighbor is administratively shut down — clearing will not bring it up.'],
   [/^router bgp (\d+)$/,(m,s)=>{if(s.mode==='exec')return'% Enter "configure terminal" first';if(m[1]!=='65010')return'% BGP is already running; AS is 65010';s.mode='rtr';return''}],
-  [/^(no )?neighbor (\S+) shutdown$/,(m,s,a)=>{if(s.mode!=='rtr')return'% Enter "router bgp 65010" first';if(!m[1]){if(m[2]==='192.0.2.1')a.pen('You shut down ISP-A — DC-1 is now OFFLINE!');return''}if(m[2]==='198.51.100.1'){s.up=true;a.ok('up');return'%BGP-5-ADJCHANGE: neighbor 198.51.100.1 Up'}return''}],
+  [/^(no )?neighbor (\S+) shutdown$/,(m,s,a)=>{if(s.mode!=='rtr')return'% Enter "router bgp 65010" first';if(!m[1]){if(m[2]==='192.0.2.1')a.pen('You shut down ISP-A — the data centre is now OFFLINE!');return''}if(m[2]==='198.51.100.1'){s.up=true;a.ok('up');return'%BGP-5-ADJCHANGE: neighbor 198.51.100.1 Up'}return''}],
   [wr,()=>'[OK]']]});
 
 /* ================= FIREWALL LABS ================= */
@@ -429,7 +429,7 @@ lab('px-filter',{t:'Secure Web Gateway: stop risky browsing',dom:'Proxy',host:'p
  learn:'A web proxy controls outbound browsing: block risky categories (phishing, malware, newly-registered domains), stop executable downloads, and allow specific business exceptions through a ticket.',
  init:()=>({cat:{phishing:'allow',malware:'allow','newly-registered':'allow',social:'allow',news:'allow'},exe:false,allow:[]}),
  cmds:[
-  [/^show logs$/,(m,s,a)=>{a.ok('logs');return'TIME  USER       URL                                       CATEGORY          ACTION\n09:02 p.sharma   login-secure-update.example/office365     phishing          allow\n09:05 r.iyer     login-secure-update.example/office365     phishing          allow\n10:11 a.khan     files-free-download.example/setup.exe     newly-registered  allow\n10:30 m.das      news.example/today                         news              allow'}],
+  [/^show logs$/,(m,s,a)=>{a.ok('logs');return'TIME  USER       URL                                       CATEGORY          ACTION\n09:02 p.hughes   login-secure-update.example/office365     phishing          allow\n09:05 l.turner     login-secure-update.example/office365     phishing          allow\n10:11 a.clark     files-free-download.example/setup.exe     newly-registered  allow\n10:30 m.davis      news.example/today                         news              allow'}],
   [/^show tickets$/,()=>'TKT-311 (approved by IT manager): "Please make sure partnerportal.example keeps working — it is our logistics partner\'s new portal (newly registered last week)."'],
   [/^category list$/,(m,s)=>Object.entries(s.cat).map(([k,v])=>k.padEnd(18)+v).join('\n')],
   [/^category block (\S+)$/,(m,s,a)=>{if(!(m[1] in s.cat))return'Unknown category. See: category list';s.cat[m[1]]='block';if(m[1]==='news'||m[1]==='social')return'(blocked — but that was not required)';if(s.cat.phishing==='block'&&s.cat.malware==='block')a.ok('phish');if(s.cat['newly-registered']==='block')a.ok('nrd');return''}],
@@ -443,18 +443,18 @@ lab('px-filter',{t:'Secure Web Gateway: stop risky browsing',dom:'Proxy',host:'p
 lab('siem-brute',{t:'SIEM: password spray → compromised account',dom:'SIEM',host:'siem',lower:1,cx:'siem',prompt:()=>'siem> ',
  intro:'[CORRELATION ALERT] "Many failed VPN logins followed by a success" — severity HIGH.',
  brief:'Investigate in the SIEM: find the attacking IP, check whether it got in, see what the account did, open a case, contain (disable the user and block the IP) and fix the root cause (MFA was missing on the legacy VPN profile).',
- obj:[['top','Find the top failing source IPs','search event=auth_failure | stats count by src_ip'],['success','Check if that IP ever logged in successfully','search event=auth_success src_ip=203.0.113.45'],['scope','Investigate what the user did','search user=r.mehta'],['case','Open an incident case','case create severity=high title="VPN account compromise"'],['contain','Disable the user and block the IP','respond disable-user r.mehta   +   respond block-ip 203.0.113.45'],['mfa','Enforce MFA on the legacy VPN profile','respond enforce-mfa vpn-legacy']],
+ obj:[['top','Find the top failing source IPs','search event=auth_failure | stats count by src_ip'],['success','Check if that IP ever logged in successfully','search event=auth_success src_ip=203.0.113.45'],['scope','Investigate what the user did','search user=r.miller'],['case','Open an incident case','case create severity=high title="VPN account compromise"'],['contain','Disable the user and block the IP','respond disable-user r.miller   +   respond block-ip 203.0.113.45'],['mfa','Enforce MFA on the legacy VPN profile','respond enforce-mfa vpn-legacy']],
  cheat:['search event=auth_failure | stats count by src_ip — count failures per IP','search event=auth_success src_ip=<ip> — successful logins from an IP','search user=<name> — everything a user did','search src_ip=<ip> — everything from an IP','case create severity=high title="..." — open a case','respond disable-user <user> — disable account','respond block-ip <ip> — block at the firewall','respond enforce-mfa <profile> — require MFA'],
  learn:'SIEMs correlate logs from many systems. Here: thousands of failures, then a success = a guessed password. Scope what the account touched, contain fast, and fix the root cause — accounts without MFA are the weakest link.',
  init:()=>({d:false,b:false}),
  cmds:[
   [/^search .*auth_failure.*\|.*(stats|count|top).*$/,(m,s,a)=>{a.ok('top');return'src_ip           count   targets\n203.0.113.45     4,812   vpn (312 different usernames)\n198.51.100.7        14   vpn (1 user — typo?)\n10.20.4.18           3   ad-01'}],
   [/^search .*auth_failure.*$/,()=>'… 4,829 events. Tip: summarise with  | stats count by src_ip'],
-  [/^search .*auth_success.*203\.0\.113\.45.*$|^search .*203\.0\.113\.45.*auth_success.*$/,(m,s,a)=>{a.ok('success');return'time   user      src_ip         app   mfa\n02:41  r.mehta   203.0.113.45   vpn   NOT REQUIRED (profile: vpn-legacy)'}],
-  [/^search .*src_ip=203\.0\.113\.45.*$/,()=>'4,812 auth_failure … and 1 auth_success (user r.mehta at 02:41) ← look closer'],
-  [/^search .*user=r\.mehta.*$/,(m,s,a)=>{a.ok('scope');return'02:41 vpn        login success from 203.0.113.45 (abroad) — no MFA\n02:50 fileshare  opened \\\\fs-02\\HR\\salaries\n02:55 proxy      upload 1.2 GB to file-drop.example   <- possible data exfiltration\n08:30 vpn        normal login from Mumbai (the real user)'}],
+  [/^search .*auth_success.*203\.0\.113\.45.*$|^search .*203\.0\.113\.45.*auth_success.*$/,(m,s,a)=>{a.ok('success');return'time   user      src_ip         app   mfa\n02:41  r.miller   203.0.113.45   vpn   NOT REQUIRED (profile: vpn-legacy)'}],
+  [/^search .*src_ip=203\.0\.113\.45.*$/,()=>'4,812 auth_failure … and 1 auth_success (user r.miller at 02:41) ← look closer'],
+  [/^search .*user=r\.miller.*$/,(m,s,a)=>{a.ok('scope');return'02:41 vpn        login success from 203.0.113.45 (abroad) — no MFA\n02:50 fileshare  opened \\\\fs-02\\HR\\salaries\n02:55 proxy      upload 1.2 GB to file-drop.example   <- possible data exfiltration\n08:30 vpn        normal login from the home city (the real user)'}],
   [/^case create.*$/,(m,s,a)=>{a.ok('case');return'CASE-2291 created (severity HIGH). Timeline attached.'}],
-  [/^respond disable-user (\S+)$/,(m,s,a)=>{if(m[1]!=='r.mehta'){a.pen(`You disabled ${m[1]}, who did nothing wrong!`);return''}s.d=true;if(s.b)a.ok('contain');return'Account r.mehta disabled, sessions revoked.'}],
+  [/^respond disable-user (\S+)$/,(m,s,a)=>{if(m[1]!=='r.miller'){a.pen(`You disabled ${m[1]}, who did nothing wrong!`);return''}s.d=true;if(s.b)a.ok('contain');return'Account r.miller disabled, sessions revoked.'}],
   [/^respond block-ip (\S+)$/,(m,s,a)=>{if(m[1]!=='203.0.113.45')return`Blocked ${m[1]} (not the attacker)`;s.b=true;if(s.d)a.ok('contain');return'Firewall object updated: 203.0.113.45 blocked.'}],
   [/^respond enforce-mfa (\S+)$/,(m,s,a)=>{if(m[1]==='vpn-legacy'){a.ok('mfa');return'MFA now required for all users on vpn-legacy.'}return'(profile updated — but the weak one was vpn-legacy)'}]]});
 
@@ -468,7 +468,7 @@ lab('edr-ransom',{t:'EDR: ransomware behaviour detected',dom:'EDR',host:'edr',lo
  init:()=>({iso:new Set()}),
  cmds:[
   [/^alerts$/,(m,s,a)=>{a.ok('look');return'ID   SEV   HOST     TITLE\n311  HIGH  fs-03    Mass file rename + encryption behaviour\n308  LOW  ws-044   Unsigned driver loaded'}],
-  [/^alert show 311$/,(m,s,a)=>{a.ok('triage');return'Alert 311 — HIGH\nOrigin: WS-117 (user p.sharma) opened attachment "Invoice_2291.pdf.exe" from email "Invoice 2291" at 09:12\nBehaviour: 2,340 files renamed to *.locked on \\\\fs-03\\finance via SMB\nFile SHA256: 4b1e9c27a0f3d…e17  (prefix 4b1e9c27)\nStatus: still active'}],
+  [/^alert show 311$/,(m,s,a)=>{a.ok('triage');return'Alert 311 — HIGH\nOrigin: WS-117 (user p.hughes) opened attachment "Invoice_2291.pdf.exe" from email "Invoice 2291" at 09:12\nBehaviour: 2,340 files renamed to *.locked on \\\\fs-03\\finance via SMB\nFile SHA256: 4b1e9c27a0f3d…e17  (prefix 4b1e9c27)\nStatus: still active'}],
   [/^host isolate (\S+)$/,(m,s,a)=>{const h=m[1].replace(/^ws117$/,'ws-117');if(!['ws-117','fs-03'].includes(h))return`${h} isolated (not involved in this alert)`;s.iso.add(h);if(s.iso.size===2)a.ok('isolate');return`${h.toUpperCase()} isolated from the network — EDR console access only.`}],
   [/^host shutdown (\S+)$/,(m,s,a)=>{a.pen('Powering off destroys memory evidence — isolate instead.');return''}],
   [/^hash block (\S+)$/,(m,s,a)=>{if(m[1].startsWith('4b1e9c27')){a.ok('block');return'Hash blocked on 1,214 endpoints.'}return'Hash not found in this alert.'}],
@@ -477,20 +477,20 @@ lab('edr-ransom',{t:'EDR: ransomware behaviour detected',dom:'EDR',host:'edr',lo
 
 /* ================= PAM ================= */
 lab('pam-vendor',{t:'PAM: vendor needs root access',dom:'PAM',host:'pam',lower:1,cx:'pam',prompt:()=>'pam> ',
- intro:'[REQUEST] DB vendor "ankit.dbvendor" messaged on chat: "pls send me root password of db-07 for patching".',
+ intro:'[REQUEST] DB vendor "adam.dbvendor" messaged on chat: "pls send me root password of db-07 for patching".',
  brief:'Never share passwords. Grant the vendor time-limited, ticket-approved, recorded access through the vault, watch the session, revoke it when done and rotate the root password.',
- obj:[['look','Review pending requests','Run: requests'],['grant','Grant ticketed, time-limited, recorded access','access grant ankit.dbvendor root@db-07 --ticket CHG-4821 --duration 60m --record'],['monitor','Watch the live session','session list   then   session show S-77'],['revoke','Revoke access when the work is done','access revoke ankit.dbvendor'],['rotate','Rotate the root password','account rotate root@db-07']],
+ obj:[['look','Review pending requests','Run: requests'],['grant','Grant ticketed, time-limited, recorded access','access grant adam.dbvendor root@db-07 --ticket CHG-4821 --duration 60m --record'],['monitor','Watch the live session','session list   then   session show S-77'],['revoke','Revoke access when the work is done','access revoke adam.dbvendor'],['rotate','Rotate the root password','account rotate root@db-07']],
  cheat:['requests — pending access requests','account list — vaulted accounts','access grant <user> <account> --ticket <id> --duration <n>m --record — grant access','password show <account> — reveal a password','session list — live sessions','session show <id> — watch commands','access revoke <user> — remove access','account rotate <account> — new random password'],
  learn:'PAM vaults privileged passwords so humans never see or share them. Access is approved by ticket, limited in time, fully recorded, and the password is rotated afterwards so it cannot be reused.',
  init:()=>({g:false,r:false}),
  cmds:[
-  [/^requests$/,(m,s,a)=>{a.ok('look');return'REQ-901  ankit.dbvendor  wants root@db-07  reason: PostgreSQL patch  ticket: CHG-4821 (approved 14:00–15:00)\n(also sent via chat asking for the password — policy violation)'}],
+  [/^requests$/,(m,s,a)=>{a.ok('look');return'REQ-901  adam.dbvendor  wants root@db-07  reason: PostgreSQL patch  ticket: CHG-4821 (approved 14:00–15:00)\n(also sent via chat asking for the password — policy violation)'}],
   [/^account list$/,()=>'root@db-07        vaulted   last rotated 30d ago\nadmin@fw-edge-01  vaulted\nsa@sql-02         vaulted'],
   [/^password (show|reveal) .*$/,(m,s,a)=>{a.pen('Never reveal or share privileged passwords — that is exactly what PAM prevents.');return'(denied by policy)'}],
-  [/^access grant (\S+) (\S+)(.*)$/,(m,s,a)=>{const o=m[3];if(m[1]!=='ankit.dbvendor'||m[2]!=='root@db-07')return'Request does not match REQ-901.';if(!/--ticket chg-4821/.test(o))return'Error: an approved change ticket is required (--ticket CHG-4821)';const d=o.match(/--duration (\d+)m/);if(!d)return'Error: vendor access must be time-limited (--duration <n>m)';if(+d[1]>120)return'Policy: vendor access is limited to 120 minutes';if(!/--record/.test(o))return'Policy: vendor sessions must be recorded (--record)';s.g=true;a.ok('grant');return`Access granted for ${d[1]} minutes. Vendor connects through the PAM proxy; password is never shown.\nSession S-77 started (recording).`}],
-  [/^session list$/,(m,s)=>s.g&&!s.r?'S-77  ankit.dbvendor → root@db-07  recording  12 min':'(no live sessions)'],
+  [/^access grant (\S+) (\S+)(.*)$/,(m,s,a)=>{const o=m[3];if(m[1]!=='adam.dbvendor'||m[2]!=='root@db-07')return'Request does not match REQ-901.';if(!/--ticket chg-4821/.test(o))return'Error: an approved change ticket is required (--ticket CHG-4821)';const d=o.match(/--duration (\d+)m/);if(!d)return'Error: vendor access must be time-limited (--duration <n>m)';if(+d[1]>120)return'Policy: vendor access is limited to 120 minutes';if(!/--record/.test(o))return'Policy: vendor sessions must be recorded (--record)';s.g=true;a.ok('grant');return`Access granted for ${d[1]} minutes. Vendor connects through the PAM proxy; password is never shown.\nSession S-77 started (recording).`}],
+  [/^session list$/,(m,s)=>s.g&&!s.r?'S-77  adam.dbvendor → root@db-07  recording  12 min':'(no live sessions)'],
   [/^session show s-77$/,(m,s,a)=>{if(!s.g)return'No such session';a.ok('monitor');return'14:03  systemctl stop postgresql\n14:04  apt install --only-upgrade postgresql-14\n14:09  systemctl start postgresql\n14:10  psql -c "select version();"\n(work matches the change ticket ✓)'}],
-  [/^(access revoke ankit\.dbvendor|session end s-77)$/,(m,s,a)=>{if(!s.g)return'Nothing to revoke';s.r=true;a.ok('revoke');return'Access revoked, session S-77 closed and archived.'}],
+  [/^(access revoke adam\.dbvendor|session end s-77)$/,(m,s,a)=>{if(!s.g)return'Nothing to revoke';s.r=true;a.ok('revoke');return'Access revoked, session S-77 closed and archived.'}],
   [/^account rotate root@db-07$/,(m,s,a)=>{if(!s.r)return'Revoke the vendor first, then rotate.';a.ok('rotate');return'Password rotated (32 random characters). Vendor\'s access is now useless.'}]]});
 
 const LAB_ORDER=['lx-disk','lx-service','lx-mem','lx-perms','lx-ssh','lx-ufw','lx-patch','lx-backup','lx-brute','lx-users','nw-vlan','nw-errdis','nw-trunk','nw-route','nw-acl','nw-bgp','fw-block','fw-publish','fw-ddos','px-filter','siem-brute','edr-ransom','pam-vendor'];

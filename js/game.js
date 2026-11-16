@@ -9,7 +9,7 @@ function startLevel(L,free){
   R3.cx=null;$('#screen').classList.add('hidden');
   if(!free){paused=true;const labsIn=S.queue.filter(q=>TPL[q.id].lab).map(q=>LABS[TPL[q.id].lab]);
     openModal(`<h2>Shift ${L} — ${TIERS[S.tier]}</h2><div class="sub">${S.queue.length} incident${S.queue.length>1?'s':''} expected this shift${labsIn.length?` · ${labsIn.length} hands-on lab${labsIn.length>1?'s':''}: ${labsIn.map(l=>l.dom).join(', ')}`:''}</div>
-   <div class="txt">${L===1?'Welcome to DC-1, your first shift!\n\n• Move with WASD / arrow keys · zoom with mouse wheel or + / −\n• E (or Space) inspects equipment and talks to people — every new thing you inspect unlocks a Codex entry (C)\n• Stairs/lift (top-middle) change floors\n• Follow the orange arrow, beacon and the minimap blips (bottom-left)\n\nKeep SLA Health above 0. Wrong decisions cost SLA.':L===6?'New: your first TERMINAL LAB. Type real Linux commands. Stuck? Use the cheat-sheet on the right or the Hint button. While you work in a terminal, SLA drains more slowly.':'Fix every incident before SLA Health runs out. Wrong decisions cost SLA; fixing an incident restores a little.'+(S.tier>=3?'\n\nFrom here, some alarms are vague — check the NOC Video Wall (2F) to find the device.':'')}</div>
+   <div class="txt">${L===1?'Welcome to PAL Manesar DC, your first shift!\n\n• Move with WASD / arrow keys · zoom with mouse wheel or + / −\n• E (or Space) inspects equipment and talks to people — every new thing you inspect unlocks a Codex entry (C)\n• Stairs/lift (top-middle) change floors\n• Follow the orange arrow, beacon and the minimap blips (bottom-left)\n\nKeep SLA Health above 0. Wrong decisions cost SLA.':L===6?'New: your first TERMINAL LAB. Type real Linux commands. Stuck? Use the cheat-sheet on the right or the Hint button. While you work in a terminal, SLA drains more slowly.':'Fix every incident before SLA Health runs out. Wrong decisions cost SLA; fixing an incident restores a little.'+(S.tier>=3?'\n\nFrom here, some alarms are vague — check the NOC Video Wall (2F) to find the device.':'')}</div>
    <div class="row"><button class="pri" onclick="closeModal()">Start shift ▶</button></div>`)}
   else toast('Free roam — explore, inspect everything (E) to fill your Codex, talk to people.','ok');
 }
@@ -26,7 +26,7 @@ function spawn(id){
 }
 function skipPickups(inc){while(inc.steps[inc.idx]&&inc.steps[inc.idx].p.type==='pickup'&&S.inv.includes(inc.steps[inc.idx].p.item))inc.idx++}
 function advance(inc){inc.idx++;skipPickups(inc);if(inc.idx>=inc.steps.length)resolve(inc)}
-function resolve(inc){inc.done=true;S.up=Math.min(100,S.up+3);S.inc=S.inc.filter(i=>i!==inc);if(S.track===inc.id)S.track=S.inc[0]?.id||null;sfx.ok();toast('✅ Resolved: '+inc.title,'ok')}
+function resolve(inc){inc.done=true;S.resolved=(S.resolved||0)+1;S.up=Math.min(100,S.up+3);S.inc=S.inc.filter(i=>i!==inc);if(S.track===inc.id)S.track=S.inc[0]?.id||null;sfx.ok();toast('✅ Resolved: '+inc.title,'ok')}
 function penalty(msg){if(!S||S.free){sfx.bad();return}const p=4+S.L*.06;S.up-=p;S.wrong++;sfx.bad();toast(`✖ ${msg} (−${p.toFixed(1)}% SLA)`,'bad')}
 const curStep=inc=>inc.steps[inc.idx];
 
@@ -61,46 +61,51 @@ function talk(n){
   if(!line){line=n.lines[n.li%n.lines.length];n.li++}
   say(`<b>${esc(n.name)}</b> <span style="color:var(--mut)">(${esc(n.role)})</span>: ${esc(line)}`);
 }
-function flavor(e){const h=[...e.id].reduce((a,c)=>a+c.charCodeAt(0),0);switch(e.kind){
- case'rack':return`12 servers online. Inlet ${21+h%4}°C. PDU-A ${30+h%25}% · PDU-B ${28+h%27}%.`;
- case'ups':return'Online (double-conversion). Load 48%. Battery 100%, runtime 22 min.';
- case'crac':return`Running. Supply air ${17+h%3}°C, return ${30+h%4}°C. Humidity 47%.`;
- case'gen':return'Standby — AUTO. Fuel 92%. Coolant heater on. Last load test: passed.';
- case'fuel':return'Diesel: 18,000 L — about 36 hours at full load.';
- case'ats':return'Source = UTILITY. Generator ready. Last transfer test: 12 days ago.';
- case'elec':case'bypass':return'All breakers closed. 415 V, 50 Hz. LOTO tags: none.';
- case'trafo':return'11 kV → 415 V. Winding 72°C. Load 58%.';
- case'batt':return'40 blocks, all 24–26°C. Float voltage normal.';
- case'suppression':return'Clean-agent system: ARMED. Cross-zoned detection. No alarms.';
- case'gas':return'3 cylinders. Pressure in green band. Last weighed: 5 months ago.';
- case'leak':return'Leak cable: dry in all 8 zones.';
- case'vesda':return'Level: NORMAL (0.002 %obs/m). Airflow OK.';
- case'facp':return'System NORMAL. 412 addressable devices. 0 troubles.';
- case'pa':return'Voice-evac amplifiers OK. Last weekly test: passed.';
- case'nvr':return'64 channels recording. Storage 71%. Retention 90 days.';
- case'access':return'Doors online: 38/38. Last swipe: you, at the mantrap.';
- case'bms':return'Chillers OK · CRACs OK · PUE 1.42 · No active alarms.';
- case'switch':return'48×25G + 8×100G. All uplinks up. CPU 9%.';
- case'firewall':return'HA pair active/passive. 2.1 Gbps. 312 rules.';
- case'router':return'BGP: ISP-A & ISP-B Established. 2 × 10G uplinks.';
- case'proxy':return'4,120 users today. 312 blocked requests.';
- case'lb':return'Pool web-prod: 6/6 members healthy.';
- case'ids':return'Inline IPS. 14 low alerts today. Signatures updated 2 h ago.';
- case'patch':return'144 fiber ports. Labels match the cable records.';
- case'san':return'2 controllers, 240 disks, RAID-6. 61% used. Snapshots hourly.';
- case'tape':return'LTO-9 library: 80 slots. Weekly off-site rotation.';
- case'backup':return'Last night: 214 jobs OK, 0 failed. Last restore test: 9 days ago.';
- case'kvm':return'Crash cart with monitor and keyboard.';
- case'siem':return'14,200 events/sec. 3 open alerts.';
- case'pam':return'312 privileged accounts vaulted. 2 live sessions (recorded).';
- case'edr':return'1,214 endpoints protected. 0 isolated.';
- case'cctv':return'64 cameras online.';
- case'video':case'console':return'Dashboards green. Nothing unusual right now.';
- case'reader':return'Badge + fingerprint. Last entry: you.';
- case'parts':return'Spares for fans, disks, PSUs, filters, optics.';
- case'mydesk':return'Your laptop (MFA jump host). A sticky note: "test the backups!"';
- case'pantry':return'You grab a coffee. ☕';
- default:return'All normal.'}}
+function flavor(e){switch(e.kind){
+ case'rack':return'Houses the servers, storage and network gear in standard slots, with dual power feeds and organised cabling.';
+ case'ups':return'Keeps IT equipment running on clean, uninterrupted power and bridges the gap until generators take over.';
+ case'crac':return'Precision cooling unit: supplies cold air to the cold aisle and controls temperature and humidity.';
+ case'gen':return'Standby diesel generator. Starts automatically when grid power fails and carries the critical load.';
+ case'fuel':return'Stores diesel for the generators so the site can run on its own during long grid outages.';
+ case'ats':return'Automatic Transfer Switch: moves the load between grid power and generator power without manual action.';
+ case'elec':return'Distributes incoming power through protective breakers to UPS, cooling and other building loads.';
+ case'bypass':return'Lets the UPS be serviced while the IT load stays powered.';
+ case'trafo':return'Steps the incoming high-voltage supply down to the voltage used inside the building.';
+ case'batt':return'Battery strings that power the UPS during an outage. Every block is monitored continuously.';
+ case'suppression':return'Controls the clean-agent gas fire suppression for the IT spaces — safe for people and electronics.';
+ case'gas':return'Cylinders holding the clean-agent gas released by the suppression system in case of a confirmed fire.';
+ case'leak':return'Monitors water-sensing cables under the raised floor and shows the exact zone of any leak.';
+ case'vesda':return'Very early smoke detection: continuously samples the air and warns long before visible smoke.';
+ case'facp':return'Fire Alarm Control Panel: supervises all detectors, call points and sounders across the building.';
+ case'pa':return'Public address and voice evacuation system for announcements and automatic evacuation messages.';
+ case'nvr':return'Records all CCTV cameras and keeps footage for the retention period set by policy.';
+ case'access':return'Access control server: decides who may open which door, when — and logs every swipe.';
+ case'bms':return'Building Management System: one view of cooling, power, leaks and environmental alarms.';
+ case'switch':return'Core switch: connects all racks and network zones with redundant high-speed links and VLANs.';
+ case'firewall':return'Next-generation firewall: filters traffic between the internet and internal zones using security rules.';
+ case'router':return'Routes traffic between the data centre and the outside world over redundant provider links.';
+ case'proxy':return'Secure web gateway: filters users\' web access and blocks malicious or risky sites.';
+ case'lb':return'Load balancer: spreads requests across healthy servers and removes failed ones automatically.';
+ case'ids':return'Intrusion detection / prevention: inspects traffic for known attack patterns and can block them.';
+ case'patch':return'Structured cabling: fiber and copper links between racks, all labelled and documented.';
+ case'san':return'Shared storage array: provides protected, high-availability storage to the servers.';
+ case'tape':return'Robotic tape library for long-term and offline backup copies.';
+ case'backup':return'Runs scheduled backups and restores so data can be recovered after failures or attacks.';
+ case'kvm':return'Mobile keyboard, video and mouse cart for direct console access to any server.';
+ case'siem':return'SIEM: collects and correlates security logs from across the site to detect threats.';
+ case'pam':return'Privileged Access Management: vaults admin passwords and records every privileged session.';
+ case'edr':return'Endpoint Detection & Response: watches servers and PCs for malicious behaviour and can isolate them.';
+ case'cctv':return'Live view of all CCTV cameras across the site.';
+ case'video':return'NOC video wall: real-time status of power, cooling, network and security across the data centre.';
+ case'console':return'Monitoring console used by the NOC team to watch alerts and manage tickets.';
+ case'reader':return'Badge + biometric reader controlling the mantrap — one person per authorised entry.';
+ case'kiosk':return'Visitor registration: ID check, host approval and temporary badge printing.';
+ case'parts':return'On-site spares for fast replacement of failed components.';
+ case'tools':return'ESD-safe tools and wrist straps for handling sensitive electronics.';
+ case'shutter':return'Secure loading dock door — every delivery is verified before entry.';
+ case'mydesk':return'Your workstation. Admin access to servers goes through this MFA-protected jump host.';
+ case'pantry':return'Tea and coffee. ☕';
+ default:return'Part of the POWERGRID PAL Manesar data centre.'}}
 function floorMenu(){openModal(`<h2>Stairs / Lift</h2><div class="sub">Choose a floor</div><div class="opts">${FLOORS.map((f,i)=>`<button ${i===S.floor?'disabled':''} onclick="goFloor(${i})">${f.short} — ${f.name}<br><small style="color:var(--mut)">${ROOMS[i].filter(r=>r!==STAIRS).map(r=>r.n.split(' —')[0]).join(' · ')}</small></button>`).join('')}</div><div class="row"><button onclick="closeModal()">Cancel</button></div>`)}
 window.goFloor=f=>{S.floor=f;S.px=15.5;S.py=6.6;R3.cx=null;closeModal();toast('📍 '+FLOORS[f].name)};
 function partsMenu(){const need=new Set(S.inc.map(i=>curStep(i)).filter(s=>s&&s.p.type==='pickup').map(s=>s.p.item));
@@ -138,6 +143,8 @@ function update(dt){
     if(moveAgent(a,dt)&&!near){const c=S.g.pick(WALK[a.f]);a.path=bfs(a.f,a.x,a.y,c[0],c[1])}
     if(a.f===S.floor&&Math.hypot(a.x-S.px,a.y-S.py)<.8){a.caught=true;const inc=S.inc.find(i=>i.id===a.inc);toast('🚔 Intruder detained and handed to security!','ok');unlockCodex('reader');if(inc)resolve(inc)}}
   S.intr=S.intr.filter(a=>!a.caught);
+  if(S.challenge){const rate=(.05+.0022*S.L)*(MODAL&&MODAL.work?.35:1);for(const i of S.inc)S.up-=i.sev*rate*dt;S.up=Math.max(0,S.up);
+    if(S.t>=S.limit||S.up<=0||(!S.queue.length&&!S.inc.length)){S.over=true;if(MODAL)closeModal();challengeEnd()}return}
   if(!S.free){const rate=(.05+.0022*S.L)*(MODAL&&MODAL.work?.35:1);for(const i of S.inc)S.up-=i.sev*rate*dt;
     if(S.up<=0){S.up=0;S.over=true;sfx.bad();if(MODAL)closeModal();endScreen(false)}
     else if(!S.queue.length&&!S.inc.length){S.over=true;endScreen(true)}}
@@ -167,9 +174,9 @@ function stepHint(inc){const s=curStep(inc);if(!s)return'';
 
 /* ============ HUD ============ */
 function hud(){if(!S)return;
-  $('#hLevel').textContent=S.free?'Free Roam':`Shift ${S.L} / 100`;$('#hTier').textContent=S.free?'Explore & learn':TIERS[S.tier];
+  $('#hLevel').textContent=S.challenge?'⚡ Visitor Challenge':S.free?'Free Roam':`Shift ${S.L} / 100`;$('#hTier').textContent=S.challenge?`Fixed: ${S.resolved||0} · Score ${chScore()}`:S.free?'Explore & learn':TIERS[S.tier];
   const u=Math.max(0,S.up);$('#slaFill').style.width=(S.free?100:u)+'%';$('#slaFill').style.background=u>60?'var(--ok)':u>30?'var(--acc)':'var(--bad)';
-  $('#slaPct').textContent=S.free?'—':u.toFixed(1)+'%';$('#hTime').textContent='⏱ '+fmt(S.t);
+  $('#slaPct').textContent=S.free?'—':u.toFixed(1)+'%';$('#hTime').textContent=S.challenge?'⏳ '+fmt(Math.max(0,S.limit-S.t))+' left':'⏱ '+fmt(S.t);
   $('#hInv').innerHTML=S.inv.length?S.inv.map(p=>`<span class="chip">${esc(p)}</span>`).join(''):'<span style="color:var(--mut);font-size:12px">empty</span>';
   $('#hCodex').textContent=`📘 ${Object.keys(SAVE.codex).length}/${Object.keys(CODEX).length} · 💻 ${Object.keys(SAVE.labs).length}/${LAB_ORDER.length}`;
   $('#hCount').textContent=S.free?'':`(${S.inc.length} open · ${S.queue.length} pending)`;
@@ -205,19 +212,19 @@ window.practice=id=>runLab(id,{onDone:showAcademy});
 
 /* ============ menus ============ */
 function showMenu(){closeModal();paused=false;S=null;const sc=$('#screen');sc.classList.remove('hidden');const tot=Object.values(SAVE.stars).reduce((a,b)=>a+b,0);
-  sc.innerHTML=`<div class="menu"><div class="title">DC<span>·</span>OPS</div><div class="tag">Run a 3-floor data center for 100 shifts. Fix power, cooling, servers and networks, configure switches, routers and firewalls, hunt attackers in the SIEM — and learn how every component works.</div>
-  <div class="mbtns"><button class="pri" onclick="startLevel(${SAVE.unlocked})">▶ ${SAVE.unlocked>1?'Continue — Shift '+SAVE.unlocked:'Start Shift 1'}</button><button onclick="showAcademy()">💻 Academy (${Object.keys(SAVE.labs).length}/${LAB_ORDER.length})</button><button onclick="showCodex()">📘 Codex (${Object.keys(SAVE.codex).length}/${Object.keys(CODEX).length})</button><button onclick="startLevel(1,true)">🧭 Free Roam</button><button onclick="howTo()">❓ How to play</button></div>
-  <div class="mbtns"><button onclick="toggleMute(this)">${SAVE.muted?'🔇 Sound off':'🔊 Sound on'}</button><button onclick="toggleGfx(this)">🎨 Graphics: ${SAVE.gfx==='low'?'Low':'High'}</button></div>
+  sc.innerHTML=`<div class="menu"><div class="brandbar"><img src="assets/logo-powergrid.jpg" onerror="this.remove()" alt=""><img src="assets/logo-powertel.jpg" onerror="this.remove()" alt=""></div><div class="loc">POWERGRID PAL MANESAR</div><div class="title">DATA CENTRE <span>SIMULATOR</span></div><div class="tag">Run a 3-floor data centre for 100 shifts. Fix power, cooling, servers and networks, configure switches, routers and firewalls, hunt attackers in the SIEM — and learn how every component works.</div>
+  <div class="mbtns"><button onclick="startLevel(${SAVE.unlocked})">▶ ${SAVE.unlocked>1?'Continue — Shift '+SAVE.unlocked:'Start Shift 1'}</button><button onclick="showAcademy()">💻 Academy (${Object.keys(SAVE.labs).length}/${LAB_ORDER.length})</button><button onclick="showCodex()">📘 Codex (${Object.keys(SAVE.codex).length}/${Object.keys(CODEX).length})</button><button class="pri" onclick="startChallenge()">⚡ Visitor Challenge (3 min)</button><button onclick="showBoard()">🏆 Leaderboard</button><button onclick="startLevel(1,true)">🧭 Free Roam</button><button onclick="howTo()">❓ How to play</button></div>
+  <div class="mbtns"><button onclick="toggleMute(this)">${SAVE.muted?'🔇 Sound off':'🔊 Sound on'}</button><button onclick="toggleFS()">⛶ Fullscreen</button><button onclick="toggleGfx(this)">🎨 Graphics: ${SAVE.gfx==='low'?'Low':'High'}</button></div>
   <div class="card"><h3>Shifts <span style="color:var(--mut);font-weight:500;font-size:13px">· ${tot}/300 ★</span></h3>
   <div class="legend">${TIERS.slice(1).map((t,i)=>`<span><i style="background:${['#2a4d78','#2a6b55','#7a6230','#7a3434','#6a3d85'][i]}"></i>${t} (${['1–15','16–35','36–60','61–85','86–100'][i]})</span>`).join('')}</div>
   <div class="grid">${Array.from({length:100},(_,i)=>{const L=i+1,lk=L>SAVE.unlocked,s=SAVE.stars[L]||0;const sl=SCRIPT[L]?SCRIPT[L].find(x=>x.startsWith('L:')):null;return`<button class="lv t${tierOf(L)}" ${lk?'disabled':''} onclick="startLevel(${L})" title="${sl?esc(LABS[sl.slice(2)].t):''}">${lk?'🔒':L}<small>${sl?'💻':''}${'★'.repeat(s)}</small></button>`}).join('')}</div></div></div>`}
 window.showMenu=showMenu;window.startLevel=startLevel;
 window.toggleMute=b=>{SAVE.muted=!SAVE.muted;save();b.textContent=SAVE.muted?'🔇 Sound off':'🔊 Sound on'};
 window.toggleGfx=b=>{SAVE.gfx=SAVE.gfx==='low'?'high':'low';save();b.textContent='🎨 Graphics: '+(SAVE.gfx==='low'?'Low':'High')+' (reload to apply)'};
-window.howTo=()=>openModal(`<h2>How to play</h2><div class="txt">You are the on-shift engineer at DC-1, a 3-floor data center.
+window.howTo=()=>openModal(`<h2>How to play</h2><div class="txt">You are the on-shift engineer at POWERGRID PAL Manesar, a 3-floor data centre.
 
 <b>G — Ground:</b> lobby, reception & visitor kiosk, mantrap, Security Office (CCTV, NVR, access control, fire alarm panel, PA, BMS), electrical room (switchgear, ATS, transformer), generator yard, storage (spare parts), loading dock.
-<b>1F — Server Hall:</b> 78 racks, SAN, tape library, backup server, CRAC cooling, VESDA, UPS room, network room (core switch, firewall, router, proxy, load balancer, IPS), batteries & gas suppression.
+<b>1F — Server Hall:</b> rows of server racks, SAN, tape library, backup server, CRAC cooling, VESDA, UPS room, network room (core switch, firewall, router, proxy, load balancer, IPS), batteries & gas suppression.
 <b>2F — Offices:</b> NOC video wall, SOC (SIEM, PAM, EDR consoles), ops manager, open office with your jump-host desk, pantry.
 
 <b>Controls</b>
@@ -250,6 +257,21 @@ $('#bMap').onclick=()=>{if(S&&!MODAL)showMap()};$('#bCodex').onclick=()=>{if(!MO
 $('#bPause').onclick=()=>{if(S&&!MODAL&&!S.over)pauseMenu()};$('#miniwrap').onclick=()=>{if(S&&!MODAL)showMap()};
 function pauseMenu(){paused=true;openModal(`<h2>Paused</h2><div class="sub">${S.free?'Free roam':'Shift '+S.L}</div><div class="opts"><button class="pri" id="rs">▶ Resume</button><button onclick="showCodex()">📘 Codex</button><button onclick="howTo()">❓ How to play</button><button id="rt">↺ Restart shift</button><button onclick="showMenu()">⌂ Main menu</button></div>`,false);
   $('#rs').onclick=()=>{paused=false;closeModal()};$('#rt').onclick=()=>{paused=false;startLevel(S.L,S.free)}}
+
+/* ============ inauguration extras: visitor challenge, leaderboard, attract mode, fullscreen ============ */
+const chScore=()=>!S?0:Math.max(0,(S.resolved||0)*100+(S.over?Math.round(S.up)*2:0)-(S.wrong||0)*20+((S.over&&!S.queue.length&&!S.inc.length)?Math.round(Math.max(0,S.limit-S.t))*2:0));
+window.startChallenge=()=>{startLevel(9);closeModal();S.challenge=true;S.limit=180;S.resolved=0;
+  S.queue=S.g.shuffle(['cable','badge','fan','cctv','vesda','reader','intruder','delivery','tailgate']).slice(0,5).map((id,i)=>({id,at:2+i*13}));paused=true;
+  openModal(`<h2>⚡ Visitor Challenge</h2><div class="sub">POWERGRID PAL MANESAR · 3 minutes</div><div class="txt">Five incidents will hit the data centre. Fix as many as you can before time runs out!\n\n• Move: WASD / arrow keys (or the on-screen pad)\n• Interact: E / Space\n• Follow the orange arrow and the minimap blips\n\n100 points per incident · bonus for SLA health and time left · −20 per wrong decision.</div><div class="row"><button class="pri" onclick="closeModal()">Start! ▶</button></div>`)};
+function challengeEnd(){const sc=chScore();setTimeout(()=>{openModal(`<h2>⏱ Time!</h2><div style="font-size:44px;font-weight:900;color:#ffd27a">${sc} pts</div><div class="txt">Incidents fixed: ${S.resolved||0}\nSLA health: ${S.up.toFixed(0)}%\nWrong decisions: ${S.wrong}</div><div class="lbl">ENTER YOUR NAME FOR THE LEADERBOARD</div><input class="namein" id="nm" maxlength="18" placeholder="Your name"><div class="row"><button class="pri" id="sv">Save score</button><button onclick="showMenu()">Skip</button></div>`,false);
+  const nm=$('#nm');nm.focus();const sv=()=>{const n=(nm.value.trim()||'Guest').slice(0,18);SAVE.board=(SAVE.board||[]).concat({n,s:sc,d:Date.now()}).sort((a,b)=>b.s-a.s).slice(0,10);save();showBoard(n,sc)};$('#sv').onclick=sv;nm.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')sv()})},500)}
+window.showBoard=(hn,hs)=>{const b=SAVE.board||[];openModal(`<h2>🏆 Leaderboard</h2><div class="sub">POWERGRID PAL MANESAR · Visitor Challenge — top 10</div>${b.length?`<table class="board"><tr><th>#</th><th>Name</th><th>Score</th></tr>${b.map((r,i)=>`<tr${r.n===hn&&r.s===hs?' style="background:#2a2410"':''}><td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td><td>${esc(r.n)}</td><td>${r.s}</td></tr>`).join('')}</table>`:'<div class="txt">No scores yet — be the first!</div>'}<div class="row"><button class="pri" onclick="startChallenge()">⚡ Play again</button><button onclick="showMenu()">Menu</button></div>`)};
+window.toggleFS=()=>{try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>toast('Fullscreen is not allowed here — press F11','warn'))}catch(e){toast('Press F11 for fullscreen','warn')}};
+let lastInput=performance.now(),ATTRACT=false;
+function enterAttract(){ATTRACT=true;$('#screen').classList.add('hidden');$('#attract').classList.remove('hidden')}
+function exitAttract(){ATTRACT=false;$('#attract').classList.add('hidden');showMenu()}
+['keydown','pointerdown','wheel','touchstart','mousemove'].forEach(ev=>addEventListener(ev,e=>{lastInput=performance.now();if(ATTRACT&&ev!=='mousemove'){e.preventDefault();e.stopPropagation();exitAttract()}},{capture:true}));
+setInterval(()=>{const idle=performance.now()-lastInput;if(ATTRACT)return;if(!S&&!MODAL&&idle>45000)enterAttract();else if(S&&idle>180000){closeModal();showMenu()}},1000);
 
 /* ============ loop ============ */
 let last=performance.now(),hudT=0;

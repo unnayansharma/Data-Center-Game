@@ -1,4 +1,4 @@
-# DC·OPS — Data Center Shift Simulator
+# POWERGRID PAL MANESAR — Data Centre Simulator
 
 A 3D, browser-based educational game: run a 3-floor data center for 100 shifts,
 fix power/cooling/server incidents, catch intruders, and complete hands-on terminal
@@ -28,3 +28,11 @@ Option B (CLI):
     netlify deploy --dir . --prod
 Option C (Git): push this folder to GitHub, then in Netlify: Add new site →
 Import from Git → pick the repo → build command: (leave empty) → publish directory: .
+
+## Inauguration / kiosk tips
+- Use the ⛶ Fullscreen button (or F11) on the display PC.
+- "⚡ Visitor Challenge" = a 3-minute round for walk-in visitors, with a local Top-10 leaderboard.
+- After 45 s with no input the menu switches to an attract screen (flyover + "Press any key").
+  A game left idle for 3 minutes returns to the menu automatically.
+- Leaderboard and progress are stored in that browser (localStorage). Clear site data to reset.
+- Graphics: Low in the menu if the display PC is slow (reload after changing).
