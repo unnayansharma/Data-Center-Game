@@ -212,7 +212,7 @@ window.practice=id=>runLab(id,{onDone:showAcademy});
 
 /* ============ menus ============ */
 function showMenu(){closeModal();paused=false;S=null;const sc=$('#screen');sc.classList.remove('hidden');const tot=Object.values(SAVE.stars).reduce((a,b)=>a+b,0);
-  sc.innerHTML=`<div class="menu"><div class="brandbar"><img src="assets/logo-powergrid.jpg" onerror="this.remove()" alt=""><img src="assets/logo-powertel.jpg" onerror="this.remove()" alt=""></div><div class="loc">POWERGRID PAL MANESAR</div><div class="title">DATA CENTRE <span>SIMULATOR</span></div><div class="tag">Run a 3-floor data centre for 100 shifts. Fix power, cooling, servers and networks, configure switches, routers and firewalls, hunt attackers in the SIEM — and learn how every component works.</div>
+  sc.innerHTML=`<div class="menu"><div class="brandbar"><img src="assets/logo-powergrid.jpg" onerror="this.remove()" alt=""><img src="assets/logo-powertel.jpg" onerror="this.remove()" alt=""></div><div class="title">DATA CENTER <span>SIMULATION</span></div><div class="loc">📍 POWERGRID PAL MANESAR</div><div class="tag">Run a 3-floor data center for 100 shifts. Fix power, cooling, servers and networks, configure switches, routers and firewalls, hunt attackers in the SIEM — and learn how every component works.</div>
   <div class="mbtns"><button onclick="startLevel(${SAVE.unlocked})">▶ ${SAVE.unlocked>1?'Continue — Shift '+SAVE.unlocked:'Start Shift 1'}</button><button onclick="showAcademy()">💻 Academy (${Object.keys(SAVE.labs).length}/${LAB_ORDER.length})</button><button onclick="showCodex()">📘 Codex (${Object.keys(SAVE.codex).length}/${Object.keys(CODEX).length})</button><button class="pri" onclick="startChallenge()">⚡ Visitor Challenge (3 min)</button><button onclick="showBoard()">🏆 Leaderboard</button><button onclick="startLevel(1,true)">🧭 Free Roam</button><button onclick="howTo()">❓ How to play</button></div>
   <div class="mbtns"><button onclick="toggleMute(this)">${SAVE.muted?'🔇 Sound off':'🔊 Sound on'}</button><button onclick="toggleFS()">⛶ Fullscreen</button><button onclick="toggleGfx(this)">🎨 Graphics: ${SAVE.gfx==='low'?'Low':'High'}</button></div>
   <div class="card"><h3>Shifts <span style="color:var(--mut);font-weight:500;font-size:13px">· ${tot}/300 ★</span></h3>
@@ -253,8 +253,8 @@ addEventListener('keyup',e=>{if(KM[e.code])keys[KM[e.code]]=false;if(e.key==='Sh
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 document.querySelectorAll('#touch [data-k]').forEach(b=>{const k=b.dataset.k;const on=e=>{e.preventDefault();keys[k]=true},off=e=>{e.preventDefault();keys[k]=false};b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointerleave',off);b.addEventListener('pointercancel',off)});
 $('#tAct').addEventListener('pointerdown',e=>{e.preventDefault();interact()});
-$('#bMap').onclick=()=>{if(S&&!MODAL)showMap()};$('#bCodex').onclick=()=>{if(!MODAL)showCodex()};
-$('#bPause').onclick=()=>{if(S&&!MODAL&&!S.over)pauseMenu()};$('#miniwrap').onclick=()=>{if(S&&!MODAL)showMap()};
+$('#bMap').onclick=()=>{if(MODAL&&MODAL.closable)closeModal();if(S&&!MODAL)showMap()};$('#bCodex').onclick=()=>{if(MODAL&&MODAL.closable)closeModal();if(!MODAL)showCodex()};
+$('#bPause').onclick=()=>{if(MODAL&&MODAL.closable)closeModal();if(S&&!MODAL&&!S.over)pauseMenu();else if(!S)showMenu()};$('#bFS').onclick=()=>toggleFS();$('#bSnd').onclick=()=>{SAVE.muted=!SAVE.muted;save();$('#bSnd').textContent=SAVE.muted?'🔇':'🔊'};$('#bSnd').textContent=SAVE.muted?'🔇':'🔊';$('#miniwrap').onclick=()=>{if(S&&!MODAL)showMap()};
 function pauseMenu(){paused=true;openModal(`<h2>Paused</h2><div class="sub">${S.free?'Free roam':'Shift '+S.L}</div><div class="opts"><button class="pri" id="rs">▶ Resume</button><button onclick="showCodex()">📘 Codex</button><button onclick="howTo()">❓ How to play</button><button id="rt">↺ Restart shift</button><button onclick="showMenu()">⌂ Main menu</button></div>`,false);
   $('#rs').onclick=()=>{paused=false;closeModal()};$('#rt').onclick=()=>{paused=false;startLevel(S.L,S.free)}}
 
@@ -272,6 +272,35 @@ function enterAttract(){ATTRACT=true;$('#screen').classList.add('hidden');$('#at
 function exitAttract(){ATTRACT=false;$('#attract').classList.add('hidden');showMenu()}
 ['keydown','pointerdown','wheel','touchstart','mousemove'].forEach(ev=>addEventListener(ev,e=>{lastInput=performance.now();if(ATTRACT&&ev!=='mousemove'){e.preventDefault();e.stopPropagation();exitAttract()}},{capture:true}));
 setInterval(()=>{const idle=performance.now()-lastInput;if(ATTRACT)return;if(!S&&!MODAL&&idle>45000)enterAttract();else if(S&&idle>180000){closeModal();showMenu()}},1000);
+
+/* ============ background music (generated live with Web Audio — no audio files needed) ============ */
+const MUS={ctx:null,out:null,dly:null,timer:null,next:0,step:0,started:false};
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+const PROG=[{root:45,ch:[57,60,64,69]},{root:41,ch:[53,57,60,65]},{root:48,ch:[52,55,60,64]},{root:43,ch:[55,59,62,67]}]; // Am F C G
+function musVol(){return SAVE.music?Math.pow(SAVE.vol/100,1.5)*.5:0}
+function musInit(){if(MUS.ctx)return true;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const c=AC;MUS.ctx=c;
+  MUS.out=c.createGain();MUS.out.gain.value=musVol();const comp=c.createDynamicsCompressor();MUS.out.connect(comp);comp.connect(c.destination);
+  MUS.dly=c.createDelay(1);MUS.dly.delayTime.value=.45;const fb=c.createGain();fb.gain.value=.35;const dl=c.createGain();dl.gain.value=.5;MUS.dly.connect(fb);fb.connect(MUS.dly);MUS.dly.connect(dl);dl.connect(MUS.out);
+  const nb=c.createBuffer(1,c.sampleRate*.2,c.sampleRate),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;MUS.noise=nb;return true}catch(e){return false}}
+function musNote(t,freq,dur,type,vol,cut,toDelay){const c=MUS.ctx,o=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter();o.type=type;o.frequency.value=freq;f.type='lowpass';f.frequency.value=cut;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+Math.min(.04,dur*.3));g.gain.setTargetAtTime(0,t+dur*.6,dur*.25);o.connect(f);f.connect(g);g.connect(MUS.out);if(toDelay)g.connect(MUS.dly);o.start(t);o.stop(t+dur+.5)}
+function musStep(t,st){const c=MUS.ctx,bar=Math.floor(st/16),b=st%16,P=PROG[bar%4],sec=Math.floor(bar/8)%2,S16=60/104/4;
+  if(b===0)P.ch.slice(0,3).forEach((n,i)=>{musNote(t,mtof(n),S16*16,'sawtooth',.028,700+sec*500,false);musNote(t,mtof(n)*1.005,S16*16,'sawtooth',.02,700,false)});
+  if([0,6,8,11,14].includes(b))musNote(t,mtof(P.root),S16*(b===0||b===8?3:1.6),'triangle',.16,600,false);
+  if(sec===1||bar%8>=4){if(b%2===0){const n=P.ch[(b/2)%4]+12;musNote(t,mtof(n),S16*1.4,'square',.022,2200,true)}}
+  if(b%4===0){const o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(40,t+.15);g.gain.setValueAtTime(b%8===0?.32:.14,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.connect(g);g.connect(MUS.out);o.start(t);o.stop(t+.3)}
+  if(b%2===1){const n=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();n.buffer=MUS.noise;f.type='highpass';f.frequency.value=7000;g.gain.setValueAtTime(b%4===3?.05:.025,t);g.gain.exponentialRampToValueAtTime(.001,t+.06);n.connect(f);f.connect(g);g.connect(MUS.out);n.start(t);n.stop(t+.08)}}
+function musStart(){if(!SAVE.music||!musInit())return;if(MUS.ctx.state==='suspended')MUS.ctx.resume();if(MUS.timer)return;MUS.next=MUS.ctx.currentTime+.1;
+  MUS.timer=setInterval(()=>{const S16=60/104/4;while(MUS.next<MUS.ctx.currentTime+.25){musStep(MUS.next,MUS.step++);MUS.next+=S16}},40)}
+function musStop(){if(MUS.timer){clearInterval(MUS.timer);MUS.timer=null}}
+function musApply(){if(MUS.out)MUS.out.gain.setTargetAtTime(musVol(),MUS.ctx.currentTime,.1);if(SAVE.music){if(MUS.started)musStart()}else setTimeout(()=>{if(!SAVE.music)musStop()},300);
+  const b=$('#bMus');if(b){b.classList.toggle('off',!SAVE.music);b.textContent=SAVE.music?'🎵 Music':'🎵 Off'}const v=$('#vol');if(v)v.value=SAVE.vol}
+$('#bMus').onclick=()=>{SAVE.music=!SAVE.music;save();musApply()};
+$('#vol').addEventListener('input',e=>{SAVE.vol=+e.target.value;if(SAVE.vol>0&&!SAVE.music)SAVE.music=true;save();musApply()});
+$('#vol').addEventListener('keydown',e=>e.stopPropagation());
+['pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,()=>{if(!MUS.started&&SAVE.music){MUS.started=true;musStart()}},{once:false,passive:true}));
+document.addEventListener('visibilitychange',()=>{if(!MUS.ctx)return;if(document.hidden)MUS.ctx.suspend();else if(SAVE.music)MUS.ctx.resume()});
+musApply();
 
 /* ============ loop ============ */
 let last=performance.now(),hudT=0;

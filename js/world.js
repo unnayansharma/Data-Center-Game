@@ -11,7 +11,7 @@ const COLS=40,ROWS=25;
 /* ============ save ============ */
 let MEMSAVE=null;
 function loadSave(){let v=null;try{v=JSON.parse(localStorage.getItem('dcops_save3')||'null')}catch(e){}v=v||MEMSAVE||{};
-  return Object.assign({unlocked:1,stars:{},codex:{},labs:{},gfx:'high',muted:false},v)}
+  return Object.assign({unlocked:1,stars:{},codex:{},labs:{},gfx:'high',muted:false,music:true,vol:45},v)}
 function save(){MEMSAVE=SAVE;try{localStorage.setItem('dcops_save3',JSON.stringify(SAVE))}catch(e){}}
 let SAVE=loadSave();
 

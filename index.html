@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>POWERGRID PAL MANESAR — Data Centre Simulator</title>
+<title>DATA CENTER SIMULATION — POWERGRID PAL MANESAR</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
@@ -19,9 +19,19 @@ button{font:inherit;color:var(--txt);background:var(--panel2);border:1px solid v
 button:hover{border-color:var(--acc)}
 button:disabled{opacity:.45;cursor:default}
 .hidden{display:none!important}
-#app{display:flex;gap:10px;padding:10px;height:100vh}
+#topbar{position:relative;z-index:25;height:58px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:linear-gradient(90deg,#101845,#121722 60%);border-bottom:1px solid var(--line)}
+.tbrand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.06em;color:#ffd27a;font-size:17px;white-space:nowrap;overflow:hidden}
+.tbrand img{height:38px;border-radius:6px;background:#fff;padding:2px}
+.tbtns{display:flex;gap:8px;flex-wrap:nowrap}
+.tbtns button{padding:8px 14px;font-size:15px;font-weight:600;white-space:nowrap}
+.tstack{display:flex;flex-direction:column;line-height:1.15}.tbrand .tt{color:#fff;font-size:18px}.tbrand .tl{color:#ffd27a;font-size:13.5px}
+.mus{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:0 8px 0 0}
+.mus button{border:none;background:transparent}.mus button.off{opacity:.5;text-decoration:line-through}
+#vol{width:90px;accent-color:#f5a524}
+.tbtns .menu-b{background:var(--acc);color:#111;border-color:var(--acc);font-weight:800}
+#app{display:flex;gap:10px;padding:10px;height:calc(100vh - 58px)}
 #stage{position:relative;flex:1;min-width:0;display:flex;align-items:center;justify-content:center}
-#cvwrap{position:relative;width:100%;max-width:calc((100vh - 20px)*1.6);aspect-ratio:1.6}
+#cvwrap{position:relative;width:100%;max-width:calc((100vh - 78px)*1.6);aspect-ratio:1.6}
 #cv{width:100%;height:100%;display:block;border-radius:10px;border:1px solid var(--line);background:#000}
 #nav{position:absolute;left:12px;top:12px;background:#000b;border:1px solid var(--acc);color:var(--acc);padding:6px 12px;border-radius:8px;font-weight:700;font-size:15px;display:none;pointer-events:none;max-width:55%}
 #prompt{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:#000c;border:1px solid var(--acc);color:var(--acc);padding:6px 14px;border-radius:20px;font-weight:700;font-size:15px;pointer-events:none;display:none;white-space:nowrap}
@@ -54,7 +64,7 @@ button:disabled{opacity:.45;cursor:default}
 .sev1{border-left-color:#e3c34a}.sev2{border-left-color:#ff9a3c}.sev3{border-left-color:#ff4d4d}
 .chip{display:inline-block;background:#0a0d12;border:1px solid var(--line);border-radius:12px;padding:2px 9px;margin:2px 3px 0 0;font-size:13.5px}
 .hbtns{display:flex;gap:6px}.hbtns button{flex:1;padding:8px 4px;font-size:13.5px}
-#modal{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:20;padding:12px}
+#modal{position:fixed;inset:58px 0 0 0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:20;padding:12px}
 .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;width:min(640px,100%);max-height:94vh;overflow:auto;box-shadow:0 20px 60px #000c;position:relative}
 .box.wide{width:min(1100px,100%)}
 .box h2{margin:0 0 4px;font-size:22px}
@@ -93,7 +103,7 @@ button:disabled{opacity:.45;cursor:default}
 #tedit{position:absolute;inset:0;background:#0b0e13f5;border-radius:12px;padding:18px;display:flex;flex-direction:column}
 #tedArea{flex:1;background:#04070a;color:#e8ffe9;border:1px solid #2a3a2a;border-radius:8px;padding:12px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:none;outline:none}
 /* menus */
-#screen{position:fixed;inset:0;z-index:15;background:radial-gradient(ellipse at top,#16223ad9,#07090dee 70%);overflow:auto;display:flex;justify-content:center;padding:30px 14px}
+#screen{position:fixed;inset:58px 0 0 0;z-index:15;background:radial-gradient(ellipse at top,#16223ad9,#07090dee 70%);overflow:auto;display:flex;justify-content:center;padding:30px 14px}
 .menu{width:min(900px,100%)}
 .title{font-size:46px;font-weight:900;letter-spacing:-.02em;margin:10px 0 0;text-shadow:0 4px 24px #000}
 .title span{color:var(--acc)}
@@ -129,7 +139,7 @@ button:disabled{opacity:.45;cursor:default}
 .brandbar img{height:64px;border-radius:8px;background:#fff;padding:4px}
 .loc{font-size:22px;font-weight:900;letter-spacing:.06em;color:#ffd27a;margin-top:12px}
 #hLoc{font-size:12.5px;font-weight:800;letter-spacing:.08em;color:#ffd27a;margin-bottom:4px}
-#attract{position:fixed;inset:0;z-index:16;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:9vh;background:linear-gradient(transparent 40%,#000c);cursor:pointer;text-align:center}
+#attract{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:9vh;background:linear-gradient(transparent 40%,#000c);cursor:pointer;text-align:center}
 #attract .a1{font-size:clamp(28px,5vw,64px);font-weight:900;letter-spacing:.04em;text-shadow:0 4px 30px #000}
 #attract .a2{font-size:clamp(16px,2.2vw,26px);color:#ffd27a;margin-top:6px;font-weight:700}
 #attract .a3{margin-top:26px;font-size:clamp(18px,2.4vw,28px);font-weight:800;background:var(--acc);color:#111;padding:12px 28px;border-radius:40px;animation:pulse 1.4s ease-in-out infinite}
@@ -137,11 +147,13 @@ button:disabled{opacity:.45;cursor:default}
 @keyframes pulse{50%{transform:scale(1.06);box-shadow:0 0 40px #f5a52488}}
 .board{width:100%;border-collapse:collapse;font-size:16px}.board td,.board th{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}.board tr:first-child td{color:#ffd27a;font-weight:800}
 .namein{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:#0a0d12;color:var(--txt)}
-@media (max-width:900px){#app{flex-direction:column;height:auto;min-height:100vh}html,body{overflow:auto}#hud{width:100%}#cvwrap{max-width:100%}.labgrid{grid-template-columns:1fr}#miniwrap,#mini{width:130px;height:auto}#say{left:3%}}
+@media (max-width:900px){.tstack{display:none}.tbtns button{padding:7px 9px;font-size:13px}#app{flex-direction:column;height:auto;min-height:100vh}html,body{overflow:auto}#hud{width:100%}#cvwrap{max-width:100%}.labgrid{grid-template-columns:1fr}#miniwrap,#mini{width:130px;height:auto}#say{left:3%}}
 @media (pointer:coarse){#touch{display:block}}
 </style>
 </head>
 <body>
+<div id="topbar"><div class="tbrand"><img src="assets/logo-powergrid.jpg" onerror="this.remove()" alt=""><img src="assets/logo-powertel.jpg" onerror="this.remove()" alt=""><div class="tstack"><span class="tt">DATA CENTER SIMULATION</span><span class="tl">📍 POWERGRID PAL MANESAR</span></div></div>
+  <div class="tbtns"><button id="bMap">🗺 Map (M)</button><button id="bCodex">📘 Codex (C)</button><button id="bFS">⛶ Fullscreen</button><button id="bSnd" title="Sound effects">🔊</button><span class="mus"><button id="bMus" title="Music on/off">🎵 Music</button><input id="vol" type="range" min="0" max="100" title="Music volume"></span><button id="bPause" class="menu-b">☰ Menu (Esc)</button></div></div>
 <div id="app">
   <div id="stage">
     <div id="cvwrap">
@@ -162,16 +174,15 @@ button:disabled{opacity:.45;cursor:default}
     </div>
   </div>
   <aside id="hud">
-    <div class="hb"><div id="hLoc">📍 POWERGRID PAL MANESAR</div><div id="hLevel">—</div><div id="hTier"></div><div id="hCodex"></div></div>
+    <div class="hb"><div id="hLevel">—</div><div id="hTier"></div><div id="hCodex"></div></div>
     <div class="hb"><div class="lbl">SLA HEALTH</div><div class="bar"><div id="slaFill"></div></div><div id="slaTxt"><span id="slaPct"></span><span id="hTime"></span></div></div>
     <div class="hb"><div class="lbl">TOOLBAG (max 4)</div><div id="hInv"></div></div>
     <div class="hb grow"><div class="lbl">INCIDENT BOARD <span id="hCount"></span></div><div id="hInc"></div></div>
-    <div class="hbtns"><button id="bMap">🗺 Map (M)</button><button id="bCodex">📘 Codex (C)</button><button id="bPause">☰ Menu</button></div>
   </aside>
 </div>
 <div id="modal" class="hidden"><div class="box" id="mbox"></div></div>
 <div id="screen"></div>
-<div id="attract" class="hidden"><div class="brandbar"><img src="assets/logo-powergrid.jpg" onerror="this.remove()" alt=""><img src="assets/logo-powertel.jpg" onerror="this.remove()" alt=""></div><div class="a1">POWERGRID PAL MANESAR</div><div class="a2">Data Centre Simulator — learn how a data centre really works</div><div class="a3">▶ Press any key or tap to play</div></div>
+<div id="attract" class="hidden"><div class="brandbar"><img src="assets/logo-powergrid.jpg" onerror="this.remove()" alt=""><img src="assets/logo-powertel.jpg" onerror="this.remove()" alt=""></div><div class="a1">DATA CENTER SIMULATION</div><div class="a2">📍 POWERGRID PAL MANESAR</div><div class="a3">▶ Press any key or tap to play</div></div>
 <script src="js/world.js"></script>
 <script src="js/codex.js"></script>
 <script src="js/labs.js"></script>

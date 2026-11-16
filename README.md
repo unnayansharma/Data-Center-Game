@@ -1,4 +1,4 @@
-# POWERGRID PAL MANESAR — Data Centre Simulator
+# DATA CENTER SIMULATION — POWERGRID PAL MANESAR
 
 A 3D, browser-based educational game: run a 3-floor data center for 100 shifts,
 fix power/cooling/server incidents, catch intruders, and complete hands-on terminal
@@ -35,4 +35,5 @@ Import from Git → pick the repo → build command: (leave empty) → publish d
 - After 45 s with no input the menu switches to an attract screen (flyover + "Press any key").
   A game left idle for 3 minutes returns to the menu automatically.
 - Leaderboard and progress are stored in that browser (localStorage). Clear site data to reset.
+- Music: 🎵 button + volume slider in the top bar (music is generated live — no audio files).
 - Graphics: Low in the menu if the display PC is slow (reload after changing).

@@ -133,23 +133,31 @@ function pylon(){const g=new THREE.Group(),M=std('#a7b0ba',.45,.85),H=10.5,lv=[0
 function wire(a,b,sag,mat){const pts=[];for(let i=0;i<=16;i++){const t=i/16;const p=new THREE.Vector3().lerpVectors(a,b,t);p.y-=sag*(1-(2*t-1)*(2*t-1));pts.push(p)}return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat)}
 function signTex(){const c=document.createElement('canvas');c.width=1024;c.height=256;const x=c.getContext('2d');const t=new THREE.CanvasTexture(c);t.anisotropy=8;
   const paint=(imgs)=>{const gr=x.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#1d2a6b');gr.addColorStop(1,'#101845');x.fillStyle=gr;x.fillRect(0,0,1024,256);x.fillStyle='#f5a524';x.fillRect(0,236,1024,20);
-    x.fillStyle='#fff';x.textAlign='center';x.font='900 44px system-ui,sans-serif';x.fillText('POWERGRID PAL MANESAR',512,118);x.font='700 30px system-ui,sans-serif';x.fillStyle='#ffd27a';x.fillText('DATA CENTRE',512,170);
+    x.fillStyle='#fff';x.textAlign='center';x.font='900 44px system-ui,sans-serif';x.fillText('POWERGRID PAL MANESAR',512,118);x.font='700 30px system-ui,sans-serif';x.fillStyle='#ffd27a';x.fillText('DATA CENTER',512,170);
     if(imgs)imgs.forEach((im,i)=>{if(!im)return;const h=84,w=Math.min(170,h*im.width/im.height),X=i?1024-w-22:22;x.fillStyle='#fff';x.fillRect(X-6,78,w+12,h+12);x.drawImage(im,X,84,w,h)});t.needsUpdate=true};
   paint();const imgs=[null,null];BRAND_LOGOS.forEach((L,i)=>{const im=new Image();im.onload=()=>{imgs[i]=im;paint(imgs);try{x.getImageData(0,0,1,1)}catch(e){imgs[0]=imgs[1]=null;paint()}};im.src=L.src});return t}
 function buildPowerSite(ext){
   const wm=new THREE.LineBasicMaterial({color:'#2a2e35'});
-  const pos=[[-36,-10],[-16,-10],[4,-10],[24,-10],[44,-10],[64,-3]];const P=pos.map(([x,z])=>{const p=pylon();p.g.position.set(x,0,z);p.g.updateMatrix();ext.add(p.g);return p});
-  for(let i=0;i<P.length-1;i++){const A=P[i],B=P[i+1];A.tips.forEach((t,k)=>{const a=t.clone().add(A.g.position),b=B.tips[k].clone().add(B.g.position);ext.add(wire(a,b,k===6?.6:1.4,wm))})}
-  // switchyard
-  const yard=new THREE.Group();const gv=new THREE.Mesh(new THREE.PlaneGeometry(18,22),std('#6f7378',1));gv.rotation.x=-Math.PI/2;gv.position.set(65,.02,8);gv.receiveShadow=true;yard.add(gv);
-  const post=std('#8a9097',.5,.7);for(let x=56;x<=74;x+=2){[-3,19].forEach(z=>{const p=box(.08,1.8,.08,post);p.position.set(x,.9,z);yard.add(p)})}for(let z=-3;z<=19;z+=2){[56,74].forEach(x=>{const p=box(.08,1.8,.08,post);p.position.set(x,.9,z);yard.add(p)})}
-  const fm=new THREE.LineBasicMaterial({color:'#9aa0a8'});[.6,1.2,1.75].forEach(h=>{yard.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([V3(56,h,-3),V3(74,h,-3),V3(74,h,19),V3(56,h,19),V3(56,h,-3)]),fm))});
-  [[61,8],[69,8]].forEach(([x,z])=>{const t=box(3,2.4,2.2,std('#6b7a6c',.5,.4));t.position.set(x,1.2,z);yard.add(t);for(let i=0;i<7;i++){const f=box(.06,1.9,2.6,std('#5d6b5e',.5,.4));f.position.set(x-1.4+i*.47,1.15,z);yard.add(f)}
-    for(let i=-1;i<=1;i++){const b=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,1.1,8),std('#c9a46a',.4));b.position.set(x+i*.8,2.95,z-.4);yard.add(b)}const cn=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,2.4,12),std('#6b7a6c',.5,.4));cn.rotation.z=Math.PI/2;cn.position.set(x,3.1,z+.8);yard.add(cn)});
-  for(let i=0;i<6;i++){const x=58.5+i*2.8;const st_=box(.2,1.6,.2,post);st_.position.set(x,.8,14);yard.add(st_);const bk=box(.6,.7,.5,std('#b8bec6',.4,.5));bk.position.set(x,1.95,14);yard.add(bk);const ins=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,.9,8),std('#e6e8ea'));ins.position.set(x,2.75,14);yard.add(ins)}
-  const lbl=textSprite('POWERGRID SWITCHYARD',{size:30,h:.9,bg:'rgba(16,24,69,.85)',color:'#ffd27a'});lbl.position.set(65,6,8);yard.add(lbl);
+  // transmission line runs north→south and lands in the switchyard on the LEFT (west) side of the data centre
+  const pos=[[-14,-36],[-14,-22],[-14,-8],[-13.5,5]];
+  const P=pos.map(([x,z])=>{const p=pylon();p.g.position.set(x,0,z);p.g.rotation.y=Math.PI/2;p.g.updateMatrix();p.g.updateMatrixWorld(true);ext.add(p.g);return{p,w:p.tips.map(t=>t.clone().applyMatrix4(p.g.matrix))}});
+  for(let i=0;i<P.length-1;i++)P[i].w.forEach((a,k)=>ext.add(wire(a,P[i+1].w[k],k===6?.6:1.4,wm)));
+  // switchyard (west)
+  const yard=new THREE.Group(),X0=-23,X1=-4,Z0=0,Z1=22,cx=(X0+X1)/2,cz=(Z0+Z1)/2;
+  const gv=new THREE.Mesh(new THREE.PlaneGeometry(X1-X0,Z1-Z0),std('#6f7378',1));gv.rotation.x=-Math.PI/2;gv.position.set(cx,.02,cz);gv.receiveShadow=true;yard.add(gv);
+  const post=std('#8a9097',.5,.7);for(let x=X0;x<=X1;x+=2){[Z0,Z1].forEach(z=>{const p=box(.08,1.8,.08,post);p.position.set(x,.9,z);yard.add(p)})}for(let z=Z0;z<=Z1;z+=2){[X0,X1].forEach(x=>{const p=box(.08,1.8,.08,post);p.position.set(x,.9,z);yard.add(p)})}
+  const fm=new THREE.LineBasicMaterial({color:'#9aa0a8'});[.6,1.2,1.75].forEach(h=>{yard.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([V3(X0,h,Z0),V3(X1,h,Z0),V3(X1,h,Z1),V3(X0,h,Z1),V3(X0,h,Z0)]),fm))});
+  const bush=[];
+  [[-18,13],[-9,13]].forEach(([x,z])=>{const t=box(3,2.4,2.2,std('#6b7a6c',.5,.4));t.position.set(x,1.2,z);yard.add(t);for(let i=0;i<7;i++){const f=box(.06,1.9,2.6,std('#5d6b5e',.5,.4));f.position.set(x-1.4+i*.47,1.15,z);yard.add(f)}
+    for(let i=-1;i<=1;i++){const b=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,1.1,8),std('#c9a46a',.4));b.position.set(x+i*.8,2.95,z-.4);yard.add(b);bush.push(V3(x+i*.8,3.5,z-.4))}const cn=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,2.4,12),std('#6b7a6c',.5,.4));cn.rotation.z=Math.PI/2;cn.position.set(x,3.1,z+.8);yard.add(cn)});
+  // down-leads from the terminal tower to the transformers
+  const T=P[P.length-1].w;[0,2,4].forEach((k,i)=>{yard.add(wire(T[k],bush[i],.4,wm));yard.add(wire(T[k+1],bush[i+3],.4,wm))});
+  for(let i=0;i<6;i++){const z=3+i*3;const st_=box(.2,1.6,.2,post);st_.position.set(-6,.8,z);yard.add(st_);const bk=box(.5,.7,.6,std('#b8bec6',.4,.5));bk.position.set(-6,1.95,z);yard.add(bk);const ins=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,.9,8),std('#e6e8ea'));ins.position.set(-6,2.75,z);yard.add(ins)}
+  // cable trench from the switchyard to the building
+  const tr=box(2.2,.06,.8,std('#4a4d52',.9));tr.position.set(-2.6,.03,8);yard.add(tr);
+  const lbl=textSprite('POWERGRID SWITCHYARD',{size:30,h:.9,bg:'rgba(16,24,69,.85)',color:'#ffd27a'});lbl.position.set(cx,6.5,cz+4);yard.add(lbl);
   ext.add(yard);
-  const tl=textSprite('Transmission line',{size:26,h:.7});tl.position.set(14,13.5,-10);ext.add(tl);
+  const tl=textSprite('Transmission line',{size:26,h:.7});tl.position.set(-14,13.5,-22);ext.add(tl);
   // entrance sign (monument)
   const sg=new THREE.Group();const face=new THREE.MeshBasicMaterial({map:signTex()});const s=box(8,2,.35,[std('#1d2a6b'),std('#1d2a6b'),std('#1d2a6b'),std('#1d2a6b'),face,std('#1d2a6b')]);s.position.y=1.7;sg.add(s);
   [-3.2,3.2].forEach(x=>{const p=box(.35,.8,.35,std('#888',.4,.6));p.position.set(x,.4,0);sg.add(p)});const base=box(8.6,.25,1,std('#6b6f76',.8));base.position.y=.12;sg.add(base);
@@ -168,7 +176,7 @@ function init3d(){
   R3.rackMat=[0,1,2,3].map(i=>faceMat(rackFace(i*99+5,false)));R3.hotRack=faceMat(rackFace(7,true));R3.hotRack.emissive=new THREE.Color('#ff3030');
   // exterior
   const ext=new THREE.Group();const gp=new THREE.Mesh(new THREE.PlaneGeometry(120,100),new THREE.MeshStandardMaterial({map:groundTex(),roughness:1}));gp.rotation.x=-Math.PI/2;gp.position.set(COLS/2,-.03,ROWS/2);gp.receiveShadow=true;ext.add(gp);
-  const tg=RNG(9);for(let i=0;i<40;i++){let x,z;do{x=-20+tg()*80;z=-18+tg()*60}while(x>-3&&x<43&&z>-3&&z<36||x>45&&x<55||z>29&&z<40||x>53&&z>-7&&z<22||z>-14&&z<-6);const t=tree();t.position.set(x,0,z);t.scale.setScalar(.8+tg()*.6);ext.add(t)}
+  const tg=RNG(9);for(let i=0;i<46;i++){let x,z;do{x=-36+tg()*96;z=-30+tg()*76}while(x>-3&&x<43&&z>-3&&z<36||x>45&&x<55||z>29&&z<40||x>-25&&x<-2);const t=tree();t.position.set(x,0,z);t.scale.setScalar(.8+tg()*.6);ext.add(t)}
   for(let i=0;i<6;i++){const car=new THREE.Group();const b=box(1.8,.55,.9,std(['#b33','#36c','#ddd','#333','#c93','#3a6'][i],.35,.6));b.position.y=.4;car.add(b);const tp=box(1,.4,.8,std('#223',.2,.6));tp.position.set(-.1,.85,0);car.add(tp);car.position.set(4.5+i*3.5,0,27.3);car.rotation.y=Math.PI/2;ext.add(car)}
   buildPowerSite(ext);
   sc.add(ext);R3.ext=ext;
@@ -235,7 +243,7 @@ function draw(now){
   const dt=lastDraw?Math.min(.1,(now-lastDraw)/1000):0;lastDraw=now;if(!R3.ok)return;const pulse=(Math.sin(now/160)+1)/2;
   const render=()=>{if(R3.comp)R3.comp.render();else R3.r.render(R3.sc,R3.cam)};
   if(!S){R3.floors.forEach((g,i)=>g.visible=i===0);R3.ext.position.y=0;R3.chars.forEach(c=>c.g.visible=false);R3.arrow.visible=R3.beacon.visible=R3.ring.visible=false;
-    const t=now/12000;R3.cam.position.set(24+Math.sin(t)*36,24,10+Math.cos(t)*36);R3.cam.lookAt(24,2,8);R3.dl.position.set(12,30,30);R3.dl.target.position.set(24,0,8);render();$('#nav').style.display='none';$('#miniwrap').style.display='none';return}
+    const t=now/12000;R3.cam.position.set(12+Math.sin(t)*40,26,8+Math.cos(t)*40);R3.cam.lookAt(12,2,8);R3.dl.position.set(0,30,30);R3.dl.target.position.set(12,0,8);render();$('#nav').style.display='none';$('#miniwrap').style.display='none';return}
   const f=S.floor;R3.floors.forEach((g,i)=>g.visible=i===f);R3.ext.position.y=-4.5*f;
   if(((now/450)|0)!==R3.tick){R3.tick=(now/450)|0}
   const hot=new Map();S.inc.forEach(i=>{const s=curStep(i);if(s&&s.loc)hot.set(s.loc,s.p.type==='pickup'?'#f5a524':'#ff4d4d')});
