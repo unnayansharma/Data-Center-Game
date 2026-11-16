@@ -32,7 +32,8 @@ Import from Git → pick the repo → build command: (leave empty) → publish d
 ## Inauguration / kiosk tips
 - Use the ⛶ Fullscreen button (or F11) on the display PC.
 - "⚡ Visitor Challenge" = a 3-minute round for walk-in visitors, with a local Top-10 leaderboard.
-- After 45 s with no input the menu switches to an attract screen (flyover + "Press any key").
+- The game opens on a welcome SLIDESHOW (welcome, leaderboard, features, "did you know", challenge high score) over a 3D flyover.
+  Any key/tap goes to the main menu. "🎞 Slideshow" (top bar or menu) shows it again; it also returns after 45 s idle on the menu.
   A game left idle for 3 minutes returns to the menu automatically.
 - Leaderboard and progress are stored in that browser (localStorage). Clear site data to reset.
 - Music: 🎵 button + volume slider in the top bar (music is generated live — no audio files).

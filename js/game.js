@@ -3,7 +3,7 @@
 let S=null,MODAL=null,paused=false;
 const keys={};
 function startLevel(L,free){
-  const seed=Date.now()%100000;closeModal();
+  const seed=Date.now()%100000;closeModal();if(typeof ATTRACT!=='undefined'&&ATTRACT){ATTRACT=false;clearInterval(slideT);$('#attract').classList.add('hidden')}
   S={L,free,tier:free?1:tierOf(L),t:0,up:100,floor:0,px:8.5,py:22.5,dir:[0,-1],inv:[],inc:[],queue:free?[]:planLevel(L,seed),intr:[],track:null,over:false,nid:1,g:RNG(seed+L),
      npcs:NPCDEF.map(n=>({...n,x:n.x+.5,y:n.y+.5,pi:0,path:null,li:0})),wrong:0};
   R3.cx=null;$('#screen').classList.add('hidden');
@@ -212,9 +212,10 @@ window.practice=id=>runLab(id,{onDone:showAcademy});
 
 /* ============ menus ============ */
 function showMenu(){closeModal();paused=false;S=null;const sc=$('#screen');sc.classList.remove('hidden');const tot=Object.values(SAVE.stars).reduce((a,b)=>a+b,0);
-  sc.innerHTML=`<div class="menu"><div class="brandbar"><img src="assets/logo-powergrid.jpg" onerror="this.remove()" alt=""><img src="assets/logo-powertel.jpg" onerror="this.remove()" alt=""></div><div class="title">DATA CENTER <span>SIMULATION</span></div><div class="loc">📍 POWERGRID PAL MANESAR</div><div class="tag">Run a 3-floor data center for 100 shifts. Fix power, cooling, servers and networks, configure switches, routers and firewalls, hunt attackers in the SIEM — and learn how every component works.</div>
+  sc.innerHTML=`<div class="menu"><div class="mhead"><div><div class="brandbar"><img src="assets/logo-powergrid.jpg" onerror="this.remove()" alt=""><img src="assets/logo-powertel.jpg" onerror="this.remove()" alt=""></div><div class="title">DATA CENTER <span>SIMULATION</span></div><div class="loc">📍 POWERGRID PAL MANESAR</div><div class="tag">Run a 3-floor data center for 100 shifts. Fix power, cooling, servers and networks, configure switches, routers and firewalls, hunt attackers in the SIEM — and learn how every component works.</div>
   <div class="mbtns"><button onclick="startLevel(${SAVE.unlocked})">▶ ${SAVE.unlocked>1?'Continue — Shift '+SAVE.unlocked:'Start Shift 1'}</button><button onclick="showAcademy()">💻 Academy (${Object.keys(SAVE.labs).length}/${LAB_ORDER.length})</button><button onclick="showCodex()">📘 Codex (${Object.keys(SAVE.codex).length}/${Object.keys(CODEX).length})</button><button class="pri" onclick="startChallenge()">⚡ Visitor Challenge (3 min)</button><button onclick="showBoard()">🏆 Leaderboard</button><button onclick="startLevel(1,true)">🧭 Free Roam</button><button onclick="howTo()">❓ How to play</button></div>
-  <div class="mbtns"><button onclick="toggleMute(this)">${SAVE.muted?'🔇 Sound off':'🔊 Sound on'}</button><button onclick="toggleFS()">⛶ Fullscreen</button><button onclick="toggleGfx(this)">🎨 Graphics: ${SAVE.gfx==='low'?'Low':'High'}</button></div>
+  <div class="mbtns"><button onclick="toggleMute(this)">${SAVE.muted?'🔇 Sound off':'🔊 Sound on'}</button><button onclick="setTimeout(enterAttract,0)">🎞 Slideshow</button><button onclick="toggleFS()">⛶ Fullscreen</button><button onclick="toggleGfx(this)">🎨 Graphics: ${SAVE.gfx==='low'?'Low':'High'}</button></div>
+  </div><div class="card lbcard"><h3>🏆 Leaderboard</h3><div class="sub" style="color:var(--mut);margin-bottom:8px">Visitor Challenge — top 10</div>${boardHTML(SAVE.board,10)}<div class="row"><button class="pri" onclick="startChallenge()">⚡ Play the challenge</button></div></div></div>
   <div class="card"><h3>Shifts <span style="color:var(--mut);font-weight:500;font-size:13px">· ${tot}/300 ★</span></h3>
   <div class="legend">${TIERS.slice(1).map((t,i)=>`<span><i style="background:${['#2a4d78','#2a6b55','#7a6230','#7a3434','#6a3d85'][i]}"></i>${t} (${['1–15','16–35','36–60','61–85','86–100'][i]})</span>`).join('')}</div>
   <div class="grid">${Array.from({length:100},(_,i)=>{const L=i+1,lk=L>SAVE.unlocked,s=SAVE.stars[L]||0;const sl=SCRIPT[L]?SCRIPT[L].find(x=>x.startsWith('L:')):null;return`<button class="lv t${tierOf(L)}" ${lk?'disabled':''} onclick="startLevel(${L})" title="${sl?esc(LABS[sl.slice(2)].t):''}">${lk?'🔒':L}<small>${sl?'💻':''}${'★'.repeat(s)}</small></button>`}).join('')}</div></div></div>`}
@@ -265,11 +266,23 @@ window.startChallenge=()=>{startLevel(9);closeModal();S.challenge=true;S.limit=1
   openModal(`<h2>⚡ Visitor Challenge</h2><div class="sub">POWERGRID PAL MANESAR · 3 minutes</div><div class="txt">Five incidents will hit the data centre. Fix as many as you can before time runs out!\n\n• Move: WASD / arrow keys (or the on-screen pad)\n• Interact: E / Space\n• Follow the orange arrow and the minimap blips\n\n100 points per incident · bonus for SLA health and time left · −20 per wrong decision.</div><div class="row"><button class="pri" onclick="closeModal()">Start! ▶</button></div>`)};
 function challengeEnd(){const sc=chScore();setTimeout(()=>{openModal(`<h2>⏱ Time!</h2><div style="font-size:44px;font-weight:900;color:#ffd27a">${sc} pts</div><div class="txt">Incidents fixed: ${S.resolved||0}\nSLA health: ${S.up.toFixed(0)}%\nWrong decisions: ${S.wrong}</div><div class="lbl">ENTER YOUR NAME FOR THE LEADERBOARD</div><input class="namein" id="nm" maxlength="18" placeholder="Your name"><div class="row"><button class="pri" id="sv">Save score</button><button onclick="showMenu()">Skip</button></div>`,false);
   const nm=$('#nm');nm.focus();const sv=()=>{const n=(nm.value.trim()||'Guest').slice(0,18);SAVE.board=(SAVE.board||[]).concat({n,s:sc,d:Date.now()}).sort((a,b)=>b.s-a.s).slice(0,10);save();showBoard(n,sc)};$('#sv').onclick=sv;nm.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')sv()})},500)}
-window.showBoard=(hn,hs)=>{const b=SAVE.board||[];openModal(`<h2>🏆 Leaderboard</h2><div class="sub">POWERGRID PAL MANESAR · Visitor Challenge — top 10</div>${b.length?`<table class="board"><tr><th>#</th><th>Name</th><th>Score</th></tr>${b.map((r,i)=>`<tr${r.n===hn&&r.s===hs?' style="background:#2a2410"':''}><td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td><td>${esc(r.n)}</td><td>${r.s}</td></tr>`).join('')}</table>`:'<div class="txt">No scores yet — be the first!</div>'}<div class="row"><button class="pri" onclick="startChallenge()">⚡ Play again</button><button onclick="showMenu()">Menu</button></div>`)};
+window.showBoard=(hn,hs)=>{const b=SAVE.board||[];openModal(`<h2>🏆 Leaderboard</h2><div class="sub">POWERGRID PAL MANESAR · Visitor Challenge — top 10</div>${boardHTML(b,10,hn,hs)}<div class="row"><button class="pri" onclick="startChallenge()">⚡ Play again</button><button onclick="showMenu()">Menu</button></div>`)};
 window.toggleFS=()=>{try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>toast('Fullscreen is not allowed here — press F11','warn'))}catch(e){toast('Press F11 for fullscreen','warn')}};
 let lastInput=performance.now(),ATTRACT=false;
-function enterAttract(){ATTRACT=true;$('#screen').classList.add('hidden');$('#attract').classList.remove('hidden')}
-function exitAttract(){ATTRACT=false;$('#attract').classList.add('hidden');showMenu()}
+function boardHTML(b,n,hn,hs){b=(b||[]).slice(0,n);return b.length?`<table class="board"><tr><th>#</th><th>Name</th><th>Score</th></tr>${b.map((r,i)=>`<tr${r.n===hn&&r.s===hs?' style="background:#2a2410"':''}><td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td><td>${esc(r.n)}</td><td>${r.s}</td></tr>`).join('')}</table>`:'<p>No scores yet — be the first to play the Visitor Challenge!</p>'}
+const SLIDE_MS=8000;let slideI=0,slideT=null;
+function slides(){const b=SAVE.board||[];const keys=Object.keys(CODEX);const fact=CODEX[keys[Math.floor(Math.random()*keys.length)]];
+  return[
+  `<h3>Welcome!</h3><p>Step inside a 3D data center at <b>POWERGRID PAL MANESAR</b> — walk the floors, meet the team and keep everything running.</p><ul><li>⚡ Power: grid, transformers, UPS, batteries and generators</li><li>❄️ Cooling, fire safety and building systems</li><li>🌐 Networks, firewalls and cyber security</li></ul>`,
+  `<h3>🏆 Leaderboard — Visitor Challenge</h3>${boardHTML(b,10)}`,
+  `<h3>What you can do</h3><ul><li>🔧 Fix real-world incidents: failed fans, disks, power cuts, water leaks</li><li>💻 Type real Linux commands and configure switches, routers and ACLs</li><li>🛡️ Hunt attackers in the SIEM, contain ransomware, manage privileged access</li><li>🚔 Catch intruders with the help of guards and CCTV</li></ul>`,
+  `<h3>💡 Did you know? — ${esc(fact.t)}</h3><p>${esc(fact.body)}</p><p style="color:#ffd27a">Tip: ${esc(fact.tip)}</p>`,
+  `<h3>⚡ Visitor Challenge — 3 minutes</h3><p>Fix as many incidents as you can and get your name on the board.</p><p>Score to beat:</p><div class="big">${b[0]?b[0].s+' pts':'—'}</div><p>${b[0]?'by '+esc(b[0].n):'Be the first!'}</p>`]}
+function showSlide(){const all=slides();slideI=slideI%all.length;$('#slideWrap').innerHTML=`<div class="slide">${all[slideI]}</div><div class="dots">${all.map((_,i)=>`<i class="${i===slideI?'on':''}"></i>`).join('')}</div>`}
+function enterAttract(){closeModal();if(S)showMenu();ATTRACT=true;$('#screen').classList.add('hidden');$('#attract').classList.remove('hidden');slideI=0;showSlide();clearInterval(slideT);slideT=setInterval(()=>{slideI++;showSlide()},SLIDE_MS)}
+let attractExitT=0;addEventListener('click',e=>{if(performance.now()-attractExitT<600){e.preventDefault();e.stopPropagation()}},{capture:true});
+function exitAttract(){ATTRACT=false;attractExitT=performance.now();clearInterval(slideT);$('#attract').classList.add('hidden');showMenu()}
+window.enterAttract=enterAttract;
 ['keydown','pointerdown','wheel','touchstart','mousemove'].forEach(ev=>addEventListener(ev,e=>{lastInput=performance.now();if(ATTRACT&&ev!=='mousemove'){e.preventDefault();e.stopPropagation();exitAttract()}},{capture:true}));
 setInterval(()=>{const idle=performance.now()-lastInput;if(ATTRACT)return;if(!S&&!MODAL&&idle>45000)enterAttract();else if(S&&idle>180000){closeModal();showMenu()}},1000);
 
@@ -305,4 +318,5 @@ musApply();
 /* ============ loop ============ */
 let last=performance.now(),hudT=0;
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(paused&&!MODAL)paused=false;if(!paused)update(dt);try{draw(now)}catch(e){console.error(e)}hudT-=dt;if(hudT<=0){hud();hudT=.25}requestAnimationFrame(loop)}
-init3d();showMenu();requestAnimationFrame(loop);
+init3d();showMenu();enterAttract();requestAnimationFrame(loop);
+$('#bSlide').onclick=()=>setTimeout(enterAttract,0);
